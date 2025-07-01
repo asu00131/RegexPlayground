@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Skeleton } from './ui/skeleton';
 
-const SCRIPT_URL = 'https://cdn.jsdelivr.net/npm/regulex-cjs@0.5.1/regulex.js';
+const SCRIPT_URL = 'https://unpkg.com/regulex-cjs@0.5.1/regulex.js';
 
 const RegexVisualizer = ({ regex, flags }: { regex: string; flags: string }) => {
   const [scriptLoaded, setScriptLoaded] = useState(false);
