@@ -33,72 +33,8 @@ import {
   Sparkles,
   AlertCircle,
   Loader2,
-  ChevronRight,
 } from 'lucide-react';
 import RegexVisualizer from '@/components/regex-visualizer';
-
-type RegexExplanationPart = {
-  type: 'group' | 'literal' | 'char-class' | 'quantifier' | 'anchor' | 'unknown';
-  token: string;
-  description: string;
-};
-
-const tokenDescriptions: Record<string, { type: RegexExplanationPart['type'], description: string }> = {
-  '\\d': { type: 'char-class', description: '匹配任何数字 (0-9)。' },
-  '\\w': { type: 'char-class', description: '匹配任何单词字符（字母数字和下划线）。' },
-  '\\s': { type: 'char-class', description: '匹配任何空白字符。' },
-  '\\D': { type: 'char-class', description: '匹配任何非数字字符。' },
-  '\\W': { type: 'char-class', description: '匹配任何非单词字符。' },
-  '\\S': { type: 'char-class', description: '匹配任何非空白字符。' },
-  '\\b': { type: 'anchor', description: '匹配单词边界。' },
-  '\\B': { type: 'anchor', description: '匹配非单词边界。' },
-  '.': { type: 'char-class', description: '匹配除换行符以外的任何字符。' },
-  '+': { type: 'quantifier', description: '匹配一个或多个前面的标记。' },
-  '*': { type: 'quantifier', description: '匹配零个或多个前面的标记。' },
-  '?': { type: 'quantifier', description: '匹配零个或一个前面的标记。' },
-  '^': { type: 'anchor', description: '匹配字符串的开头。' },
-  '$': { type: 'anchor', description: '匹配字符串的结尾。' },
-};
-
-function parseRegex(regex: string): RegexExplanationPart[] {
-  if (!regex) return [];
-  const parts: RegexExplanationPart[] = [];
-  let groupIndex = 1;
-
-  // This is a simplified parser, not a full regex engine.
-  const regexTokens = regex.match(/(\\.|[+*?]|\{\d+,?\d*\}|\(\?[:!=<>]|\(|\)|\[.*?\]|[^\\()\[\]+*?{}^$]+)/g) || [];
-
-  let i = 0;
-  while (i < regexTokens.length) {
-    const token = regexTokens[i];
-    
-    if (token === '(') {
-      parts.push({ type: 'group', token: `分组 #${groupIndex++}`, description: `捕获分组。匹配内部的标记。` });
-      i++;
-      continue;
-    }
-    
-    const description = tokenDescriptions[token];
-    if (description) {
-      parts.push({ type: description.type, token, description: description.description });
-    } else if (token.startsWith('[') && token.endsWith(']')) {
-       parts.push({ type: 'char-class', token, description: `字符集。匹配其中包含的任意一个字符。` });
-    } else if (token.match(/^\{\d+,?\d*\}$/)) {
-      parts.push({ type: 'quantifier', token, description: `量词。匹配特定次数。` });
-    } else if (/^[^\\()\[\]+*?{}^$]+$/.test(token)) {
-      parts.push({ type: 'literal', token, description: `匹配字面量字符串 "${token}"。` });
-    }
-    else {
-        // Skip tokens like ')' etc that are handled by grouping logic or other complex tokens.
-        if (token !== ')' && !token.startsWith('(?:')) {
-           parts.push({ type: 'unknown', token, description: '一个未识别的标记。' });
-        }
-    }
-    i++;
-  }
-
-  return parts;
-}
 
 const CheatSheet = () => (
   <Accordion type="single" collapsible className="w-full">
@@ -233,8 +169,6 @@ export default function RegexPlaygroundPage() {
       return { matches: [], replacementResult: '无效的正则表达式' };
     }
   }, [regex, testString, replacementString, globalSearch, ignoreCase, multiline, regexError]);
-
-  const explanation = useMemo(() => parseRegex(regex), [regex]);
 
   const highlightedTestString = useMemo(() => {
     if (regexError || !testString || matches.length === 0) {
@@ -395,9 +329,8 @@ export default function RegexPlaygroundPage() {
           
           <div className="lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)]">
             <Tabs defaultValue="matches" className="h-full flex flex-col">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="matches">匹配</TabsTrigger>
-                <TabsTrigger value="explanation">解释</TabsTrigger>
                 <TabsTrigger value="visualization">可视化</TabsTrigger>
                 <TabsTrigger value="cheatsheet">速查表</TabsTrigger>
               </TabsList>
@@ -433,27 +366,6 @@ export default function RegexPlaygroundPage() {
                       ) : (
                         <p className="text-muted-foreground text-center py-8">未找到匹配项。</p>
                       )}
-                    </CardContent>
-                  </Card>
-              </TabsContent>
-              <TabsContent value="explanation" className="flex-grow overflow-y-auto mt-4 pr-2">
-                <Card>
-                    <CardHeader>
-                      <CardTitle className="font-bold">表达式解释</CardTitle>
-                      <CardDescription>对您的表达式进行分步解析。</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        {explanation.length > 0 ? explanation.map((part, index) => (
-                            <div key={index} className="flex items-start gap-4 p-2 rounded-md hover:bg-muted/50">
-                                <ChevronRight className="h-5 w-5 mt-0.5 text-accent flex-shrink-0"/>
-                                <div>
-                                    <p className="font-bold font-code">{part.token}</p>
-                                    <p className="text-sm text-muted-foreground">{part.description}</p>
-                                </div>
-                            </div>
-                        )) : (
-                            <p className="text-muted-foreground text-center py-8">输入一个正则表达式以查看其解释。</p>
-                        )}
                     </CardContent>
                   </Card>
               </TabsContent>
