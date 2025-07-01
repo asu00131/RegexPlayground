@@ -271,10 +271,10 @@ export default function RegexPlaygroundPage() {
                 <CardTitle className="font-bold">测试字符串</CardTitle>
               </CardHeader>
               <CardContent>
-                 <div className="relative h-48 font-code text-sm leading-relaxed border rounded-md">
+                 <div className="relative h-48 font-code text-sm border rounded-md">
                     <div 
                       ref={scrollSyncRef}
-                      className="absolute inset-0 whitespace-pre-wrap overflow-auto pointer-events-none p-2"
+                      className="absolute inset-0 whitespace-pre-wrap overflow-auto pointer-events-none p-2 leading-relaxed"
                     >
                       {highlightedTestString}
                     </div>
@@ -289,7 +289,7 @@ export default function RegexPlaygroundPage() {
                         }
                       }}
                       placeholder="在此输入您的测试字符串"
-                      className="absolute inset-0 h-full w-full bg-transparent text-transparent caret-foreground resize-none p-2 focus-visible:ring-0 border-0"
+                      className="absolute inset-0 h-full w-full bg-transparent text-transparent caret-foreground resize-none p-2 focus-visible:ring-0 border-0 leading-relaxed whitespace-pre-wrap"
                       spellCheck="false"
                       aria-label="测试字符串输入"
                     />
