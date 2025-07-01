@@ -464,7 +464,7 @@ export default function RegexPlaygroundPage() {
                     <CardDescription>正则表达式的图形化表示。</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <RegexVisualizer regex={regex} parts={explanation} />
+                    <RegexVisualizer regex={regex} />
                   </CardContent>
                 </Card>
               </TabsContent>
