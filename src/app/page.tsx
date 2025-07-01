@@ -106,7 +106,7 @@ export default function RegexPlaygroundPage() {
   const [generatedData, setGeneratedData] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   
-  const scrollSyncRef = useRef<HTMLDivElement>(null);
+  const scrollSyncRef = useRef<HTMLPreElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -172,8 +172,7 @@ export default function RegexPlaygroundPage() {
 
   const highlightedTestString = useMemo(() => {
     if (regexError || !testString || matches.length === 0) {
-      // Add a space to ensure the div has height and to handle trailing newlines.
-      return <>{testString + ' '}</>;
+      return <>{testString + '\n'}</>;
     }
   
     const parts = [];
@@ -183,14 +182,12 @@ export default function RegexPlaygroundPage() {
       const startIndex = match.index!;
       const matchText = match[0];
   
-      // Push the text before the match
       if (startIndex > lastIndex) {
         parts.push(
           <Fragment key={`pre-${i}`}>{testString.substring(lastIndex, startIndex)}</Fragment>
         );
       }
       
-      // Push the highlighted match
       parts.push(
         <mark key={`match-${i}`} className="bg-accent/40 text-accent-foreground rounded-sm">
           {matchText}
@@ -200,15 +197,13 @@ export default function RegexPlaygroundPage() {
       lastIndex = startIndex + matchText.length;
     });
   
-    // Push the remaining text after the last match
     if (lastIndex < testString.length) {
       parts.push(
         <Fragment key="post-last">{testString.substring(lastIndex)}</Fragment>
       );
     }
 
-    // Add a trailing space to prevent the last line from collapsing if it's empty.
-    parts.push(<Fragment key="trailing-space"> </Fragment>)
+    parts.push(<Fragment key="trailing-newline">{'\n'}</Fragment>)
   
     return <>{parts}</>;
   }, [matches, testString, regexError]);
@@ -280,13 +275,13 @@ export default function RegexPlaygroundPage() {
                 <CardTitle className="font-bold">测试字符串</CardTitle>
               </CardHeader>
               <CardContent>
-                 <div className="relative h-48 font-code text-sm border rounded-md">
-                    <div 
+                 <div className="relative h-48 border rounded-md">
+                    <pre
                       ref={scrollSyncRef}
-                      className="absolute inset-0 whitespace-pre-wrap overflow-auto pointer-events-none p-2 leading-relaxed text-sm"
+                      className="absolute inset-0 m-0 whitespace-pre-wrap overflow-auto pointer-events-none p-2 font-code text-sm leading-relaxed"
                     >
                       {highlightedTestString}
-                    </div>
+                    </pre>
                     <Textarea
                       ref={textareaRef}
                       value={testString}
@@ -298,7 +293,7 @@ export default function RegexPlaygroundPage() {
                         }
                       }}
                       placeholder="在此输入您的测试字符串"
-                      className="absolute inset-0 h-full w-full bg-transparent text-transparent caret-foreground resize-none p-2 focus-visible:ring-0 border-0 leading-relaxed whitespace-pre-wrap text-sm"
+                      className="absolute inset-0 m-0 h-full w-full bg-transparent text-transparent caret-foreground resize-none p-2 focus-visible:ring-0 border-0 font-code text-sm leading-relaxed whitespace-pre-wrap"
                       spellCheck="false"
                       aria-label="测试字符串输入"
                     />
