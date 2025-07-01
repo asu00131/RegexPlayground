@@ -172,36 +172,45 @@ export default function RegexPlaygroundPage() {
 
   const highlightedTestString = useMemo(() => {
     if (regexError || !testString || matches.length === 0) {
-      return <span>{testString.replace(/\n/g, '\n\u200b')}</span>;
+      // Add a space to ensure the div has height and to handle trailing newlines.
+      return <>{testString + ' '}</>;
     }
   
-    let lastIndex = 0;
     const parts = [];
+    let lastIndex = 0;
   
     matches.forEach((match, i) => {
       const startIndex = match.index!;
       const matchText = match[0];
   
-      parts.push(testString.substring(lastIndex, startIndex));
+      // Push the text before the match
+      if (startIndex > lastIndex) {
+        parts.push(
+          <Fragment key={`pre-${i}`}>{testString.substring(lastIndex, startIndex)}</Fragment>
+        );
+      }
+      
+      // Push the highlighted match
       parts.push(
-        <mark key={i} className="bg-accent/40 text-accent-foreground rounded-sm">
+        <mark key={`match-${i}`} className="bg-accent/40 text-accent-foreground rounded-sm">
           {matchText}
         </mark>
       );
+      
       lastIndex = startIndex + matchText.length;
     });
   
-    parts.push(testString.substring(lastIndex));
+    // Push the remaining text after the last match
+    if (lastIndex < testString.length) {
+      parts.push(
+        <Fragment key="post-last">{testString.substring(lastIndex)}</Fragment>
+      );
+    }
+
+    // Add a trailing space to prevent the last line from collapsing if it's empty.
+    parts.push(<Fragment key="trailing-space"> </Fragment>)
   
-    return (
-      <pre className="m-0 p-0">
-        <code>
-          {parts.map((part, i) => (
-            <Fragment key={i}>{typeof part === 'string' ? part.replace(/\n/g, '\n\u200b') : part}</Fragment>
-          ))}
-        </code>
-      </pre>
-    );
+    return <>{parts}</>;
   }, [matches, testString, regexError]);
 
   return (
@@ -274,7 +283,7 @@ export default function RegexPlaygroundPage() {
                  <div className="relative h-48 font-code text-sm border rounded-md">
                     <div 
                       ref={scrollSyncRef}
-                      className="absolute inset-0 whitespace-pre-wrap overflow-auto pointer-events-none p-2 leading-relaxed"
+                      className="absolute inset-0 whitespace-pre-wrap overflow-auto pointer-events-none p-2 leading-relaxed text-sm"
                     >
                       {highlightedTestString}
                     </div>
