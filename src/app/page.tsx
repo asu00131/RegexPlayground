@@ -35,8 +35,10 @@ import {
   Binary,
   AlertCircle,
   Loader2,
-  ChevronRight
+  ChevronRight,
+  GitBranch,
 } from 'lucide-react';
+import RegexVisualizer from '@/components/regex-visualizer';
 
 type RegexExplanationPart = {
   type: 'group' | 'literal' | 'char-class' | 'quantifier' | 'anchor' | 'unknown';
@@ -165,6 +167,7 @@ export default function RegexPlaygroundPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   
   const scrollSyncRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     try {
@@ -231,33 +234,41 @@ export default function RegexPlaygroundPage() {
 
   const highlightedTestString = useMemo(() => {
     if (regexError || !testString || matches.length === 0) {
-      return testString;
+      // Wrap the plain text in a single span to ensure consistent line height
+      return <span>{testString}</span>;
     }
-  
+
     let lastIndex = 0;
     const parts: (JSX.Element | string)[] = [];
-  
+
     matches.forEach((match, i) => {
       const startIndex = match.index!;
       const matchText = match[0];
-      
-      // 匹配前的文本
+
+      // Text before the match
       parts.push(testString.substring(lastIndex, startIndex));
-      
-      // 高亮的匹配项
+
+      // The highlighted match
       parts.push(
-        <mark key={i} className="bg-accent/40 text-accent-foreground rounded px-1">
+        <mark key={i} className="bg-accent/40 text-accent-foreground rounded px-0.5">
           {matchText}
         </mark>
       );
-      
+
       lastIndex = startIndex + matchText.length;
     });
-  
-    // 最后一次匹配后的文本
+
+    // Text after the last match
     parts.push(testString.substring(lastIndex));
-  
-    return parts.map((part, i) => <Fragment key={i}>{part}</Fragment>);
+
+    // To prevent collapsing empty lines, replace them with a non-breaking space
+    return (
+      <span>
+        {parts.map((part, i) => (
+          <Fragment key={i}>{part}</Fragment>
+        ))}
+      </span>
+    );
   }, [matches, testString, regexError]);
 
   return (
@@ -327,26 +338,27 @@ export default function RegexPlaygroundPage() {
                 <CardTitle>测试字符串</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="relative">
-                  <Textarea
-                    value={testString}
-                    onChange={(e) => setTestString(e.target.value)}
-                    onScroll={(e) => {
-                      if (scrollSyncRef.current) {
-                        scrollSyncRef.current.scrollTop = e.currentTarget.scrollTop;
-                        scrollSyncRef.current.scrollLeft = e.currentTarget.scrollLeft;
-                      }
-                    }}
-                    placeholder="在此输入您的测试字符串"
-                    className="font-code text-sm h-48 leading-relaxed bg-transparent text-transparent caret-current"
-                    aria-label="测试字符串输入"
-                  />
-                   <div 
+                 <div className="relative h-48">
+                    <div 
                       ref={scrollSyncRef}
-                      className="absolute inset-0 px-3 py-2 pointer-events-none font-code text-sm leading-relaxed whitespace-pre-wrap overflow-hidden"
+                      className="absolute inset-0 font-code text-sm leading-relaxed whitespace-pre-wrap overflow-auto pointer-events-none p-2"
                     >
                       {highlightedTestString}
                     </div>
+                    <Textarea
+                      ref={textareaRef}
+                      value={testString}
+                      onChange={(e) => setTestString(e.target.value)}
+                      onScroll={(e) => {
+                        if (scrollSyncRef.current) {
+                          scrollSyncRef.current.scrollTop = e.currentTarget.scrollTop;
+                          scrollSyncRef.current.scrollLeft = e.currentTarget.scrollLeft;
+                        }
+                      }}
+                      placeholder="在此输入您的测试字符串"
+                      className="absolute inset-0 font-code text-sm h-full w-full leading-relaxed bg-transparent text-transparent caret-foreground resize-none p-2 focus-visible:ring-0"
+                      aria-label="测试字符串输入"
+                    />
                 </div>
               </CardContent>
             </Card>
@@ -384,9 +396,10 @@ export default function RegexPlaygroundPage() {
           
           <div className="lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)]">
             <Tabs defaultValue="matches" className="h-full flex flex-col">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="matches"><Binary className="mr-2 h-4 w-4" />匹配</TabsTrigger>
                 <TabsTrigger value="explanation"><Sparkles className="mr-2 h-4 w-4" />解释</TabsTrigger>
+                <TabsTrigger value="visualization"><GitBranch className="mr-2 h-4 w-4" />可视化</TabsTrigger>
                 <TabsTrigger value="cheatsheet"><BookText className="mr-2 h-4 w-4" />速查表</TabsTrigger>
               </TabsList>
               <TabsContent value="matches" className="flex-grow overflow-y-auto mt-4 pr-2">
@@ -424,7 +437,7 @@ export default function RegexPlaygroundPage() {
                     </CardContent>
                   </Card>
               </TabsContent>
-              <TabsContent value="explanation" className="flex-grow overflow-y-auto mt-4">
+              <TabsContent value="explanation" className="flex-grow overflow-y-auto mt-4 pr-2">
                 <Card>
                     <CardHeader>
                       <CardTitle>表达式解释</CardTitle>
@@ -445,7 +458,18 @@ export default function RegexPlaygroundPage() {
                     </CardContent>
                   </Card>
               </TabsContent>
-              <TabsContent value="cheatsheet" className="flex-grow overflow-y-auto mt-4">
+              <TabsContent value="visualization" className="flex-grow overflow-y-auto mt-4 pr-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>表达式可视化</CardTitle>
+                    <CardDescription>正则表达式的图形化表示（铁路图）。</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <RegexVisualizer regex={regex} flags={`${globalSearch ? 'g' : ''}${ignoreCase ? 'i' : ''}${multiline ? 'm' : ''}`} />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              <TabsContent value="cheatsheet" className="flex-grow overflow-y-auto mt-4 pr-2">
                 <Card>
                   <CardHeader>
                     <CardTitle>正则速查表</CardTitle>
