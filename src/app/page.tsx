@@ -31,12 +31,9 @@ import { generateRegexData } from '@/ai/flows/generate-regex-data';
 import {
   ClipboardCopy,
   Sparkles,
-  BookText,
-  Binary,
   AlertCircle,
   Loader2,
   ChevronRight,
-  GitBranch,
 } from 'lucide-react';
 import RegexVisualizer from '@/components/regex-visualizer';
 
@@ -64,13 +61,13 @@ function parseRegex(regex: string): RegexExplanationPart[] {
   let groupIndex = 1;
 
   // 这是一个简化的解析器，并非一个完整的正则表达式引擎。
-  const regexTokens = regex.match(/(\\[dws.])|(\(\?.)|(\(.)|(\))|(\[.*?\])|([+*?])|([.^$])|([^\\()\[\]+*?^$]+)/g) || [];
+  const regexTokens = regex.match(/(\\[dws.])|(\(\?.)|(\()|(\))|(\[.*?\])|([+*?])|([.^$])|([^\\()\[\]+*?^$]+)/g) || [];
 
   let i = 0;
   while (i < regexTokens.length) {
     const token = regexTokens[i];
     
-    if (token.startsWith('(') && !token.startsWith('(?:')) {
+    if (token === '(') {
       parts.push({ type: 'group', token: `分组 #${groupIndex++}`, description: `捕获分组。匹配内部的标记。` });
       i++;
       continue;
@@ -79,15 +76,15 @@ function parseRegex(regex: string): RegexExplanationPart[] {
     const description = tokenDescriptions[token];
     if (description) {
       parts.push({ type: description.type, token, description: description.description });
+    } else if (token.startsWith('[') && token.endsWith(']')) {
+       parts.push({ type: 'char-class', token, description: `字符集。匹配其中包含的任意一个字符。` });
     } else if (/^[^\\()\[\]+*?^$]+$/.test(token)) {
       parts.push({ type: 'literal', token, description: `匹配字面量字符串 "${token}"。` });
-    } else if (token.startsWith('[')) {
-       parts.push({ type: 'char-class', token, description: `字符集。匹配其中包含的任意一个字符。` });
     }
     else {
         // 跳过由分组逻辑处理的 ')' 等标记或其他复杂标记。
-        if (token !== ')') {
-           parts.push({ type: 'unknown', token, description: '一个更复杂的标记。' });
+        if (token !== ')' && token !== '(?:') {
+           parts.push({ type: 'unknown', token, description: '一个未识别的标记。' });
         }
     }
     i++;
@@ -234,40 +231,35 @@ export default function RegexPlaygroundPage() {
 
   const highlightedTestString = useMemo(() => {
     if (regexError || !testString || matches.length === 0) {
-      // Wrap the plain text in a single span to ensure consistent line height
-      return <span>{testString}</span>;
+      return <span>{testString.replace(/\n/g, '\n\u200b')}</span>;
     }
-
+  
     let lastIndex = 0;
-    const parts: (JSX.Element | string)[] = [];
-
+    const parts = [];
+  
     matches.forEach((match, i) => {
       const startIndex = match.index!;
       const matchText = match[0];
-
-      // Text before the match
+  
       parts.push(testString.substring(lastIndex, startIndex));
-
-      // The highlighted match
       parts.push(
-        <mark key={i} className="bg-accent/40 text-accent-foreground rounded px-0.5">
+        <mark key={i} className="bg-accent/40 text-accent-foreground rounded-sm">
           {matchText}
         </mark>
       );
-
       lastIndex = startIndex + matchText.length;
     });
-
-    // Text after the last match
+  
     parts.push(testString.substring(lastIndex));
-
-    // To prevent collapsing empty lines, replace them with a non-breaking space
+  
     return (
-      <span>
-        {parts.map((part, i) => (
-          <Fragment key={i}>{part}</Fragment>
-        ))}
-      </span>
+      <pre className="m-0 p-0">
+        <code>
+          {parts.map((part, i) => (
+            <Fragment key={i}>{typeof part === 'string' ? part.replace(/\n/g, '\n\u200b') : part}</Fragment>
+          ))}
+        </code>
+      </pre>
     );
   }, [matches, testString, regexError]);
 
@@ -283,18 +275,18 @@ export default function RegexPlaygroundPage() {
       <main className="flex-grow container mx-auto p-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="flex flex-col gap-6">
-            <Card>
+            <Card className="shadow-none border">
               <CardHeader>
-                <CardTitle>正则表达式</CardTitle>
+                <CardTitle className="font-bold">正则表达式</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-4 bg-muted/50 rounded-md p-2">
                   <span className="text-muted-foreground font-code text-lg mt-2">/</span>
                   <Textarea
                     value={regex}
                     onChange={(e) => setRegex(e.target.value)}
                     placeholder="在此输入您的正则表达式"
-                    className="font-code text-base flex-1 bg-background border-0 shadow-none focus-visible:ring-0"
+                    className="font-code text-base flex-1 bg-transparent border-0 shadow-none focus-visible:ring-0 p-0"
                     aria-label="正则表达式输入"
                   />
                   <span className="text-muted-foreground font-code text-lg mt-2">/</span>
@@ -320,7 +312,7 @@ export default function RegexPlaygroundPage() {
                         生成示例数据
                     </Button>
                     {generatedData && (
-                        <Card className="mt-4 bg-muted/50">
+                        <Card className="mt-4 bg-muted/50 shadow-none">
                             <CardContent className="p-4">
                                <p className="font-code text-sm break-all">{generatedData}</p>
                                 <Button variant="ghost" size="sm" className="mt-2" onClick={() => handleCopy(generatedData, '生成的示例数据')}>
@@ -333,15 +325,15 @@ export default function RegexPlaygroundPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="shadow-none border">
               <CardHeader>
-                <CardTitle>测试字符串</CardTitle>
+                <CardTitle className="font-bold">测试字符串</CardTitle>
               </CardHeader>
               <CardContent>
-                 <div className="relative h-48">
+                 <div className="relative h-48 font-code text-sm leading-relaxed">
                     <div 
                       ref={scrollSyncRef}
-                      className="absolute inset-0 font-code text-sm leading-relaxed whitespace-pre-wrap overflow-auto pointer-events-none p-2"
+                      className="absolute inset-0 whitespace-pre-wrap overflow-auto pointer-events-none p-2"
                     >
                       {highlightedTestString}
                     </div>
@@ -356,16 +348,17 @@ export default function RegexPlaygroundPage() {
                         }
                       }}
                       placeholder="在此输入您的测试字符串"
-                      className="absolute inset-0 font-code text-sm h-full w-full leading-relaxed bg-transparent text-transparent caret-foreground resize-none p-2 focus-visible:ring-0"
+                      className="absolute inset-0 h-full w-full bg-transparent text-transparent caret-foreground resize-none p-2 focus-visible:ring-0 border-0"
+                      spellCheck="false"
                       aria-label="测试字符串输入"
                     />
                 </div>
               </CardContent>
             </Card>
             
-            <Card>
+            <Card className="shadow-none border">
               <CardHeader>
-                <CardTitle>替换</CardTitle>
+                <CardTitle className="font-bold">替换</CardTitle>
                 <CardDescription>使用 $1, $2 等引用捕获的分组。</CardDescription>
               </CardHeader>
               <CardContent>
@@ -378,15 +371,14 @@ export default function RegexPlaygroundPage() {
                       aria-label="替换字符串输入"
                     />
                  </div>
-                <Card className="mt-4 bg-muted/50 relative">
+                <Card className="mt-4 bg-muted/50 relative shadow-none">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base">结果</CardTitle>
+                    <CardTitle className="text-base font-bold">结果</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <pre className="font-code text-sm whitespace-pre-wrap break-all">{replacementResult}</pre>
                      <Button variant="ghost" size="sm" className="absolute top-4 right-2" onClick={() => handleCopy(replacementResult, '替换结果')}>
                       <ClipboardCopy className="h-4 w-4" />
-                      复制
                     </Button>
                   </CardContent>
                 </Card>
@@ -403,19 +395,19 @@ export default function RegexPlaygroundPage() {
                 <TabsTrigger value="cheatsheet">速查表</TabsTrigger>
               </TabsList>
               <TabsContent value="matches" className="flex-grow overflow-y-auto mt-4 pr-2">
-                 <Card>
+                 <Card className="shadow-none border">
                     <CardHeader>
-                      <CardTitle>匹配结果 <Badge variant="secondary" className="ml-2">{matches.length}</Badge></CardTitle>
+                      <CardTitle className="font-bold">匹配结果 <Badge variant="secondary" className="ml-2">{matches.length}</Badge></CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       {matches.length > 0 ? (
                         matches.map((match, index) => (
-                          <Card key={index} className="bg-muted/50">
+                          <Card key={index} className="bg-muted/50 shadow-none">
                             <CardHeader className="pb-2">
-                                <CardTitle className="text-base flex justify-between items-center">
+                                <CardTitle className="text-base flex justify-between items-center font-bold">
                                   <span>匹配 {index + 1}</span>
                                    <Button variant="ghost" size="sm" onClick={() => handleCopy(match[0], `匹配项 ${index+1}`)}>
-                                     <ClipboardCopy className="mr-2 h-4 w-4" /> 复制匹配项
+                                     <ClipboardCopy className="mr-2 h-4 w-4" /> 复制
                                    </Button>
                                 </CardTitle>
                                 <pre className="font-code text-sm p-2 bg-background rounded-md mt-1">{match[0]}</pre>
@@ -438,9 +430,9 @@ export default function RegexPlaygroundPage() {
                   </Card>
               </TabsContent>
               <TabsContent value="explanation" className="flex-grow overflow-y-auto mt-4 pr-2">
-                <Card>
+                <Card className="shadow-none border">
                     <CardHeader>
-                      <CardTitle>表达式解释</CardTitle>
+                      <CardTitle className="font-bold">表达式解释</CardTitle>
                       <CardDescription>对您的表达式进行分步解析。</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-2">
@@ -459,20 +451,20 @@ export default function RegexPlaygroundPage() {
                   </Card>
               </TabsContent>
               <TabsContent value="visualization" className="flex-grow overflow-y-auto mt-4 pr-2">
-                <Card>
+                <Card className="shadow-none border">
                   <CardHeader>
-                    <CardTitle>表达式可视化</CardTitle>
-                    <CardDescription>正则表达式的图形化表示（铁路图）。</CardDescription>
+                    <CardTitle className="font-bold">表达式可视化</CardTitle>
+                    <CardDescription>正则表达式的图形化表示。</CardDescription>
                   </CardHeader>
-                  <CardContent className="p-0">
-                    <RegexVisualizer regex={regex} flags={`${globalSearch ? 'g' : ''}${ignoreCase ? 'i' : ''}${multiline ? 'm' : ''}`} />
+                  <CardContent>
+                    <RegexVisualizer regex={regex} parts={explanation} />
                   </CardContent>
                 </Card>
               </TabsContent>
               <TabsContent value="cheatsheet" className="flex-grow overflow-y-auto mt-4 pr-2">
-                <Card>
+                <Card className="shadow-none border">
                   <CardHeader>
-                    <CardTitle>正则速查表</CardTitle>
+                    <CardTitle className="font-bold">正则速查表</CardTitle>
                     <CardDescription>常用语法的快速参考。</CardDescription>
                   </CardHeader>
                   <CardContent>

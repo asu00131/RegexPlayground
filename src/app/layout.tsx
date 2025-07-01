@@ -1,11 +1,23 @@
 import type {Metadata} from 'next';
+import { Inter, Source_Code_Pro } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
+import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
   title: '正则表达式乐园',
   description: '一个强大的在线工具，用于测试、可视化和从正则表达式生成数据。',
 };
+
+const fontSans = Inter({
+  subsets: ['latin'],
+  variable: '--font-sans',
+})
+
+const fontMono = Source_Code_Pro({
+  subsets: ['latin'],
+  variable: '--font-mono',
+})
 
 export default function RootLayout({
   children,
@@ -13,13 +25,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet" />
-      </head>
-      <body className="font-body antialiased">
+    <html lang="zh-CN" suppressHydrationWarning>
+      <body className={cn(
+        "min-h-screen bg-background font-sans antialiased",
+        fontSans.variable,
+        fontMono.variable
+      )}>
         {children}
         <Toaster />
       </body>

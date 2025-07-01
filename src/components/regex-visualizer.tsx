@@ -1,110 +1,71 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { Skeleton } from './ui/skeleton';
+import React from 'react';
+import { ArrowRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-const SCRIPT_URL = 'https://unpkg.com/regulex-cjs@0.5.1/regulex.js';
+// This type must be kept in sync with the one in page.tsx
+type RegexExplanationPart = {
+  type: 'group' | 'literal' | 'char-class' | 'quantifier' | 'anchor' | 'unknown';
+  token: string;
+  description: string;
+};
 
-const RegexVisualizer = ({ regex, flags }: { regex: string; flags: string }) => {
-  const [scriptLoaded, setScriptLoaded] = useState(false);
-  const [scriptError, setScriptError] = useState(false);
+const typeStyles: Record<RegexExplanationPart['type'], string> = {
+    literal: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30',
+    'char-class': 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30',
+    quantifier: 'bg-sky-500/10 text-sky-700 dark:text-sky-300 border border-sky-500/30',
+    anchor: 'bg-violet-500/10 text-violet-700 dark:text-violet-300 border border-violet-500/30',
+    group: 'bg-slate-500/10 text-slate-700 dark:text-slate-300 border border-slate-500/30',
+    unknown: 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/30',
+};
 
-  useEffect(() => {
-    if ((window as any).regulex) {
-      setScriptLoaded(true);
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = SCRIPT_URL;
-    script.async = true;
-
-    const handleLoad = () => {
-      setScriptLoaded(true);
-    };
-
-    const handleError = () => {
-      console.error('Failed to load regex visualizer script.');
-      setScriptError(true);
-    };
-
-    script.addEventListener('load', handleLoad);
-    script.addEventListener('error', handleError);
-
-    document.body.appendChild(script);
-
-    return () => {
-      script.removeEventListener('load', handleLoad);
-      script.removeEventListener('error', handleError);
-      // It's safer to not remove the script to avoid issues if other components are using it.
-      // If this component were to unmount and remount quickly.
-    };
-  }, []);
-
-  const { svg, error } = useMemo(() => {
-    if (!scriptLoaded || !regex) {
-      return { svg: null, error: null };
-    }
-    
-    if (!(window as any).regulex) {
-        return { svg: null, error: '可视化库加载失败。'};
-    }
-
-    try {
-      const ast = (window as any).regulex.parse(regex);
-      const generatedSvg = (window as any).regulex.visualize(ast);
-
-      const themeAwareSvg = generatedSvg
-        .replace(/fill="#000000"/g, 'fill="currentColor"')
-        .replace(/stroke="#000000"/g, 'stroke="currentColor"');
-        
-      return { svg: themeAwareSvg, error: null };
-    } catch (e: any) {
-      console.error('Regex visualization error:', e);
-      return { svg: null, error: `无法为此正则表达式生成可视化。它可能包含无效或不支持的语法。` };
-    }
-  }, [regex, scriptLoaded]);
-
-  if (scriptError) {
-      return <div className="p-4 text-center text-destructive">无法加载可视化脚本。</div>;
-  }
-  
-  if (!scriptLoaded) {
-      return (
-          <div className="space-y-2 p-4">
-              <p className="text-sm text-muted-foreground">正在加载可视化工具...</p>
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-          </div>
-      )
-  }
-
-  if (error) {
-    return <div className="p-4 text-center text-destructive">{error}</div>;
-  }
-  
+const RegexVisualizer = ({ parts, regex }: { parts: RegexExplanationPart[]; regex: string }) => {
   if (!regex) {
-      return (
-         <div className="p-4 text-center text-muted-foreground">
+    return (
+      <div className="flex h-full min-h-32 items-center justify-center rounded-lg bg-muted/50 p-4">
+        <p className="text-center text-muted-foreground">
           请输入一个正则表达式以查看其可视化。
-        </div>
-      )
+        </p>
+      </div>
+    );
   }
 
   return (
-    <>
-      <div className="p-4 border-b font-code text-sm break-all">
-        <span className="font-semibold">RegExp: </span>
-        <span className="text-muted-foreground">/</span>
-        <span className="text-primary">{regex}</span>
-        <span className="text-muted-foreground">/</span>
-        <span className="text-accent">{flags}</span>
+    <div className="overflow-x-auto p-4 bg-muted/50 rounded-lg">
+      <div className="inline-flex items-center gap-2">
+        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-background font-mono text-sm shadow-sm">
+          Start
+        </div>
+        <ArrowRight className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+        
+        <div className="flex items-stretch gap-2">
+            {parts.map((part, index) => (
+              <React.Fragment key={index}>
+                <div
+                  className={cn(
+                    'flex flex-col justify-center rounded-md p-2 text-center shadow-sm',
+                    typeStyles[part.type]
+                  )}
+                >
+                  <p className="font-code font-bold">{part.token}</p>
+                  <p className="max-w-28 truncate text-xs opacity-80">{part.description}</p>
+                </div>
+                {index < parts.length - 1 && (
+                  <div className="flex items-center">
+                    <ArrowRight className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+                  </div>
+                )}
+              </React.Fragment>
+            ))}
+        </div>
+
+        <ArrowRight className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-background font-mono text-sm shadow-sm">
+          End
+        </div>
       </div>
-      <div
-        className="p-4 overflow-x-auto text-foreground [&_svg]:mx-auto"
-        dangerouslySetInnerHTML={{ __html: svg || '' }}
-      />
-    </>
+    </div>
   );
 };
 
