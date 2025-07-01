@@ -289,7 +289,7 @@ export default function RegexPlaygroundPage() {
                         }
                       }}
                       placeholder="在此输入您的测试字符串"
-                      className="absolute inset-0 h-full w-full bg-transparent text-transparent caret-foreground resize-none p-2 focus-visible:ring-0 border-0 leading-relaxed whitespace-pre-wrap"
+                      className="absolute inset-0 h-full w-full bg-transparent text-transparent caret-foreground resize-none p-2 focus-visible:ring-0 border-0 leading-relaxed whitespace-pre-wrap text-sm"
                       spellCheck="false"
                       aria-label="测试字符串输入"
                     />
