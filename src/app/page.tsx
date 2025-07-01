@@ -47,6 +47,11 @@ const tokenDescriptions: Record<string, { type: RegexExplanationPart['type'], de
   '\\d': { type: 'char-class', description: '匹配任何数字 (0-9)。' },
   '\\w': { type: 'char-class', description: '匹配任何单词字符（字母数字和下划线）。' },
   '\\s': { type: 'char-class', description: '匹配任何空白字符。' },
+  '\\D': { type: 'char-class', description: '匹配任何非数字字符。' },
+  '\\W': { type: 'char-class', description: '匹配任何非单词字符。' },
+  '\\S': { type: 'char-class', description: '匹配任何非空白字符。' },
+  '\\b': { type: 'anchor', description: '匹配单词边界。' },
+  '\\B': { type: 'anchor', description: '匹配非单词边界。' },
   '.': { type: 'char-class', description: '匹配除换行符以外的任何字符。' },
   '+': { type: 'quantifier', description: '匹配一个或多个前面的标记。' },
   '*': { type: 'quantifier', description: '匹配零个或多个前面的标记。' },
@@ -60,8 +65,8 @@ function parseRegex(regex: string): RegexExplanationPart[] {
   const parts: RegexExplanationPart[] = [];
   let groupIndex = 1;
 
-  // 这是一个简化的解析器，并非一个完整的正则表达式引擎。
-  const regexTokens = regex.match(/(\\[dws.])|(\(\?.)|(\()|(\))|(\[.*?\])|([+*?])|([.^$])|([^\\()\[\]+*?^$]+)/g) || [];
+  // This is a simplified parser, not a full regex engine.
+  const regexTokens = regex.match(/(\\.|[+*?]|\{\d+,?\d*\}|\(\?[:!=<>]|\(|\)|\[.*?\]|[^\\()\[\]+*?{}^$]+)/g) || [];
 
   let i = 0;
   while (i < regexTokens.length) {
@@ -78,12 +83,14 @@ function parseRegex(regex: string): RegexExplanationPart[] {
       parts.push({ type: description.type, token, description: description.description });
     } else if (token.startsWith('[') && token.endsWith(']')) {
        parts.push({ type: 'char-class', token, description: `字符集。匹配其中包含的任意一个字符。` });
-    } else if (/^[^\\()\[\]+*?^$]+$/.test(token)) {
+    } else if (token.match(/^\{\d+,?\d*\}$/)) {
+      parts.push({ type: 'quantifier', token, description: `量词。匹配特定次数。` });
+    } else if (/^[^\\()\[\]+*?{}^$]+$/.test(token)) {
       parts.push({ type: 'literal', token, description: `匹配字面量字符串 "${token}"。` });
     }
     else {
-        // 跳过由分组逻辑处理的 ')' 等标记或其他复杂标记。
-        if (token !== ')' && token !== '(?:') {
+        // Skip tokens like ')' etc that are handled by grouping logic or other complex tokens.
+        if (token !== ')' && !token.startsWith('(?:')) {
            parts.push({ type: 'unknown', token, description: '一个未识别的标记。' });
         }
     }
@@ -275,7 +282,7 @@ export default function RegexPlaygroundPage() {
       <main className="flex-grow container mx-auto p-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="flex flex-col gap-6">
-            <Card className="shadow-none border">
+            <Card>
               <CardHeader>
                 <CardTitle className="font-bold">正则表达式</CardTitle>
               </CardHeader>
@@ -312,7 +319,7 @@ export default function RegexPlaygroundPage() {
                         生成示例数据
                     </Button>
                     {generatedData && (
-                        <Card className="mt-4 bg-muted/50 shadow-none">
+                        <Card className="mt-4 bg-muted/50">
                             <CardContent className="p-4">
                                <p className="font-code text-sm break-all">{generatedData}</p>
                                 <Button variant="ghost" size="sm" className="mt-2" onClick={() => handleCopy(generatedData, '生成的示例数据')}>
@@ -325,12 +332,12 @@ export default function RegexPlaygroundPage() {
               </CardContent>
             </Card>
 
-            <Card className="shadow-none border">
+            <Card>
               <CardHeader>
                 <CardTitle className="font-bold">测试字符串</CardTitle>
               </CardHeader>
               <CardContent>
-                 <div className="relative h-48 font-code text-sm leading-relaxed">
+                 <div className="relative h-48 font-code text-sm leading-relaxed border rounded-md">
                     <div 
                       ref={scrollSyncRef}
                       className="absolute inset-0 whitespace-pre-wrap overflow-auto pointer-events-none p-2"
@@ -356,7 +363,7 @@ export default function RegexPlaygroundPage() {
               </CardContent>
             </Card>
             
-            <Card className="shadow-none border">
+            <Card>
               <CardHeader>
                 <CardTitle className="font-bold">替换</CardTitle>
                 <CardDescription>使用 $1, $2 等引用捕获的分组。</CardDescription>
@@ -371,7 +378,7 @@ export default function RegexPlaygroundPage() {
                       aria-label="替换字符串输入"
                     />
                  </div>
-                <Card className="mt-4 bg-muted/50 relative shadow-none">
+                <Card className="mt-4 bg-muted/50 relative">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base font-bold">结果</CardTitle>
                   </CardHeader>
@@ -395,14 +402,14 @@ export default function RegexPlaygroundPage() {
                 <TabsTrigger value="cheatsheet">速查表</TabsTrigger>
               </TabsList>
               <TabsContent value="matches" className="flex-grow overflow-y-auto mt-4 pr-2">
-                 <Card className="shadow-none border">
+                 <Card>
                     <CardHeader>
                       <CardTitle className="font-bold">匹配结果 <Badge variant="secondary" className="ml-2">{matches.length}</Badge></CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       {matches.length > 0 ? (
                         matches.map((match, index) => (
-                          <Card key={index} className="bg-muted/50 shadow-none">
+                          <Card key={index} className="bg-muted/50">
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-base flex justify-between items-center font-bold">
                                   <span>匹配 {index + 1}</span>
@@ -430,7 +437,7 @@ export default function RegexPlaygroundPage() {
                   </Card>
               </TabsContent>
               <TabsContent value="explanation" className="flex-grow overflow-y-auto mt-4 pr-2">
-                <Card className="shadow-none border">
+                <Card>
                     <CardHeader>
                       <CardTitle className="font-bold">表达式解释</CardTitle>
                       <CardDescription>对您的表达式进行分步解析。</CardDescription>
@@ -451,7 +458,7 @@ export default function RegexPlaygroundPage() {
                   </Card>
               </TabsContent>
               <TabsContent value="visualization" className="flex-grow overflow-y-auto mt-4 pr-2">
-                <Card className="shadow-none border">
+                <Card>
                   <CardHeader>
                     <CardTitle className="font-bold">表达式可视化</CardTitle>
                     <CardDescription>正则表达式的图形化表示。</CardDescription>
@@ -462,7 +469,7 @@ export default function RegexPlaygroundPage() {
                 </Card>
               </TabsContent>
               <TabsContent value="cheatsheet" className="flex-grow overflow-y-auto mt-4 pr-2">
-                <Card className="shadow-none border">
+                <Card>
                   <CardHeader>
                     <CardTitle className="font-bold">正则速查表</CardTitle>
                     <CardDescription>常用语法的快速参考。</CardDescription>
