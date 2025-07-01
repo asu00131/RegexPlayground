@@ -278,7 +278,8 @@ export default function RegexPlaygroundPage() {
                  <div className="relative h-48 border rounded-md">
                     <pre
                       ref={scrollSyncRef}
-                      className="absolute inset-0 m-0 whitespace-pre-wrap overflow-auto pointer-events-none p-2 font-code text-sm leading-relaxed"
+                      aria-hidden="true"
+                      className="absolute inset-0 m-0 whitespace-pre-wrap overflow-auto pointer-events-none p-2 font-code text-sm leading-6"
                     >
                       {highlightedTestString}
                     </pre>
@@ -293,7 +294,7 @@ export default function RegexPlaygroundPage() {
                         }
                       }}
                       placeholder="在此输入您的测试字符串"
-                      className="absolute inset-0 m-0 h-full w-full bg-transparent text-transparent caret-foreground resize-none p-2 focus-visible:ring-0 border-0 font-code text-sm leading-relaxed whitespace-pre-wrap"
+                      className="absolute inset-0 m-0 h-full w-full bg-transparent text-transparent caret-foreground resize-none p-2 focus-visible:ring-0 border-0 font-code text-sm leading-6 whitespace-pre-wrap"
                       spellCheck="false"
                       aria-label="测试字符串输入"
                     />
