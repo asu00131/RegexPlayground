@@ -10,6 +10,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Slider } from '@/components/ui/slider';
+import { Label } from '@/components/ui/label';
 
 // This type must be kept in sync with the one in page.tsx
 type RegexExplanationPart = {
