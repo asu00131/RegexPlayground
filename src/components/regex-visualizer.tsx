@@ -5,7 +5,7 @@ import { Skeleton } from './ui/skeleton';
 
 const SCRIPT_URL = 'https://cdn.jsdelivr.net/npm/regulex-cjs@0.5.1/regulex.js';
 
-const RegexVisualizer = ({ regex }: { regex: string; flags: string }) => {
+const RegexVisualizer = ({ regex, flags }: { regex: string; flags: string }) => {
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [scriptError, setScriptError] = useState(false);
 
@@ -92,10 +92,19 @@ const RegexVisualizer = ({ regex }: { regex: string; flags: string }) => {
   }
 
   return (
-    <div
-      className="p-4 overflow-x-auto text-foreground [&_svg]:mx-auto"
-      dangerouslySetInnerHTML={{ __html: svg || '' }}
-    />
+    <>
+      <div className="p-4 border-b font-code text-sm break-all">
+        <span className="font-semibold">RegExp: </span>
+        <span className="text-muted-foreground">/</span>
+        <span className="text-primary">{regex}</span>
+        <span className="text-muted-foreground">/</span>
+        <span className="text-accent">{flags}</span>
+      </div>
+      <div
+        className="p-4 overflow-x-auto text-foreground [&_svg]:mx-auto"
+        dangerouslySetInnerHTML={{ __html: svg || '' }}
+      />
+    </>
   );
 };
 

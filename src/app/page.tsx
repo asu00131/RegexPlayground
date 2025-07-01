@@ -294,7 +294,7 @@ export default function RegexPlaygroundPage() {
                     value={regex}
                     onChange={(e) => setRegex(e.target.value)}
                     placeholder="在此输入您的正则表达式"
-                    className="font-code text-base flex-1 bg-card border-0 shadow-none focus-visible:ring-0"
+                    className="font-code text-base flex-1 bg-background border-0 shadow-none focus-visible:ring-0"
                     aria-label="正则表达式输入"
                   />
                   <span className="text-muted-foreground font-code text-lg mt-2">/</span>
@@ -397,10 +397,10 @@ export default function RegexPlaygroundPage() {
           <div className="lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)]">
             <Tabs defaultValue="matches" className="h-full flex flex-col">
               <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="matches"><Binary className="mr-2 h-4 w-4" />匹配</TabsTrigger>
-                <TabsTrigger value="explanation"><Sparkles className="mr-2 h-4 w-4" />解释</TabsTrigger>
-                <TabsTrigger value="visualization"><GitBranch className="mr-2 h-4 w-4" />可视化</TabsTrigger>
-                <TabsTrigger value="cheatsheet"><BookText className="mr-2 h-4 w-4" />速查表</TabsTrigger>
+                <TabsTrigger value="matches">匹配</TabsTrigger>
+                <TabsTrigger value="explanation">解释</TabsTrigger>
+                <TabsTrigger value="visualization">可视化</TabsTrigger>
+                <TabsTrigger value="cheatsheet">速查表</TabsTrigger>
               </TabsList>
               <TabsContent value="matches" className="flex-grow overflow-y-auto mt-4 pr-2">
                  <Card>
@@ -464,7 +464,7 @@ export default function RegexPlaygroundPage() {
                     <CardTitle>表达式可视化</CardTitle>
                     <CardDescription>正则表达式的图形化表示（铁路图）。</CardDescription>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-0">
                     <RegexVisualizer regex={regex} flags={`${globalSearch ? 'g' : ''}${ignoreCase ? 'i' : ''}${multiline ? 'm' : ''}`} />
                   </CardContent>
                 </Card>
