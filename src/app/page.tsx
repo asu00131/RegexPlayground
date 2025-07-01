@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback, useEffect, Fragment } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, Fragment, useRef } from 'react';
 import {
   Card,
   CardContent,
@@ -45,15 +45,15 @@ type RegexExplanationPart = {
 };
 
 const tokenDescriptions: Record<string, { type: RegexExplanationPart['type'], description: string }> = {
-  '\\d': { type: 'char-class', description: 'Matches any digit (0-9).' },
-  '\\w': { type: 'char-class', description: 'Matches any word character (alphanumeric & underscore).' },
-  '\\s': { type: 'char-class', description: 'Matches any whitespace character.' },
-  '.': { type: 'char-class', description: 'Matches any character except newline.' },
-  '+': { type: 'quantifier', description: 'Matches one or more of the preceding token.' },
-  '*': { type: 'quantifier', description: 'Matches zero or more of the preceding token.' },
-  '?': { type: 'quantifier', description: 'Matches zero or one of the preceding token.' },
-  '^': { type: 'anchor', description: 'Matches the start of the string.' },
-  '$': { type: 'anchor', description: 'Matches the end of the string.' },
+  '\\d': { type: 'char-class', description: '匹配任何数字 (0-9)。' },
+  '\\w': { type: 'char-class', description: '匹配任何单词字符（字母数字和下划线）。' },
+  '\\s': { type: 'char-class', description: '匹配任何空白字符。' },
+  '.': { type: 'char-class', description: '匹配除换行符以外的任何字符。' },
+  '+': { type: 'quantifier', description: '匹配一个或多个前面的标记。' },
+  '*': { type: 'quantifier', description: '匹配零个或多个前面的标记。' },
+  '?': { type: 'quantifier', description: '匹配零个或一个前面的标记。' },
+  '^': { type: 'anchor', description: '匹配字符串的开头。' },
+  '$': { type: 'anchor', description: '匹配字符串的结尾。' },
 };
 
 function parseRegex(regex: string): RegexExplanationPart[] {
@@ -61,7 +61,7 @@ function parseRegex(regex: string): RegexExplanationPart[] {
   const parts: RegexExplanationPart[] = [];
   let groupIndex = 1;
 
-  // This is a simplified parser and not a full-fledged regex engine.
+  // 这是一个简化的解析器，并非一个完整的正则表达式引擎。
   const regexTokens = regex.match(/(\\[dws.])|(\(\?.)|(\(.)|(\))|(\[.*?\])|([+*?])|([.^$])|([^\\()\[\]+*?^$]+)/g) || [];
 
   let i = 0;
@@ -69,7 +69,7 @@ function parseRegex(regex: string): RegexExplanationPart[] {
     const token = regexTokens[i];
     
     if (token.startsWith('(') && !token.startsWith('(?:')) {
-      parts.push({ type: 'group', token: `Group #${groupIndex++}`, description: `Capturing group. Matches the enclosed tokens.` });
+      parts.push({ type: 'group', token: `分组 #${groupIndex++}`, description: `捕获分组。匹配内部的标记。` });
       i++;
       continue;
     }
@@ -78,14 +78,14 @@ function parseRegex(regex: string): RegexExplanationPart[] {
     if (description) {
       parts.push({ type: description.type, token, description: description.description });
     } else if (/^[^\\()\[\]+*?^$]+$/.test(token)) {
-      parts.push({ type: 'literal', token, description: `Matches the literal string "${token}".` });
+      parts.push({ type: 'literal', token, description: `匹配字面量字符串 "${token}"。` });
     } else if (token.startsWith('[')) {
-       parts.push({ type: 'char-class', token, description: `Character set. Matches any one of the enclosed characters.` });
+       parts.push({ type: 'char-class', token, description: `字符集。匹配其中包含的任意一个字符。` });
     }
     else {
-        // Skip tokens like ')' which are handled by group logic, or other complex tokens.
+        // 跳过由分组逻辑处理的 ')' 等标记或其他复杂标记。
         if (token !== ')') {
-           parts.push({ type: 'unknown', token, description: 'A more complex token.' });
+           parts.push({ type: 'unknown', token, description: '一个更复杂的标记。' });
         }
     }
     i++;
@@ -97,52 +97,52 @@ function parseRegex(regex: string): RegexExplanationPart[] {
 const CheatSheet = () => (
   <Accordion type="single" collapsible className="w-full">
     <AccordionItem value="char-classes">
-      <AccordionTrigger>Character Classes</AccordionTrigger>
+      <AccordionTrigger>字符类</AccordionTrigger>
       <AccordionContent>
         <ul className="space-y-2 text-sm">
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">.</code> - Any character (except newline)</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">\d</code> - Any digit</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">\D</code> - Any non-digit</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">\w</code> - Any word character (a-z, A-Z, 0-9, _)</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">\W</code> - Any non-word character</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">\s</code> - Any whitespace character</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">\S</code> - Any non-whitespace character</li>
+          <li><code className="font-code bg-muted px-1 py-0.5 rounded">.</code> - 任何字符 (换行符除外)</li>
+          <li><code className="font-code bg-muted px-1 py-0.5 rounded">\d</code> - 任何数字</li>
+          <li><code className="font-code bg-muted px-1 py-0.5 rounded">\D</code> - 任何非数字字符</li>
+          <li><code className="font-code bg-muted px-1 py-0.5 rounded">\w</code> - 任何单词字符 (a-z, A-Z, 0-9, _)</li>
+          <li><code className="font-code bg-muted px-1 py-0.5 rounded">\W</code> - 任何非单词字符</li>
+          <li><code className="font-code bg-muted px-1 py-0.5 rounded">\s</code> - 任何空白字符</li>
+          <li><code className="font-code bg-muted px-1 py-0.5 rounded">\S</code> - 任何非空白字符</li>
         </ul>
       </AccordionContent>
     </AccordionItem>
     <AccordionItem value="anchors">
-      <AccordionTrigger>Anchors</AccordionTrigger>
+      <AccordionTrigger>锚点</AccordionTrigger>
       <AccordionContent>
         <ul className="space-y-2 text-sm">
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">^</code> - Start of string</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">$</code> - End of string</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">\b</code> - Word boundary</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">\B</code> - Non-word boundary</li>
+          <li><code className="font-code bg-muted px-1 py-0.5 rounded">^</code> - 字符串开头</li>
+          <li><code className="font-code bg-muted px-1 py-0.5 rounded">$</code> - 字符串结尾</li>
+          <li><code className="font-code bg-muted px-1 py-0.5 rounded">\b</code> - 单词边界</li>
+          <li><code className="font-code bg-muted px-1 py-0.5 rounded">\B</code> - 非单词边界</li>
         </ul>
       </AccordionContent>
     </AccordionItem>
     <AccordionItem value="quantifiers">
-      <AccordionTrigger>Quantifiers</AccordionTrigger>
+      <AccordionTrigger>量词</AccordionTrigger>
       <AccordionContent>
         <ul className="space-y-2 text-sm">
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">*</code> - 0 or more</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">+</code> - 1 or more</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">?</code> - 0 or 1</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">{`{n}`}</code> - Exactly n times</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">{`{n,}`}</code> - n or more times</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">{`{n,m}`}</code> - Between n and m times</li>
+          <li><code className="font-code bg-muted px-1 py-0.5 rounded">*</code> - 0个或多个</li>
+          <li><code className="font-code bg-muted px-1 py-0.5 rounded">+</code> - 1个或多个</li>
+          <li><code className="font-code bg-muted px-1 py-0.5 rounded">?</code> - 0个或1个</li>
+          <li><code className="font-code bg-muted px-1 py-0.5 rounded">{`{n}`}</code> - 正好n次</li>
+          <li><code className="font-code bg-muted px-1 py-0.5 rounded">{`{n,}`}</code> - n次或更多次</li>
+          <li><code className="font-code bg-muted px-1 py-0.5 rounded">{`{n,m}`}</code> - n到m次之间</li>
         </ul>
       </AccordionContent>
     </AccordionItem>
     <AccordionItem value="groups">
-      <AccordionTrigger>Groups & Ranges</AccordionTrigger>
+      <AccordionTrigger>分组和范围</AccordionTrigger>
       <AccordionContent>
          <ul className="space-y-2 text-sm">
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">(...)</code> - Capturing group</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">(?:...)</code> - Non-capturing group</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">[abc]</code> - Matches a, b, or c</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">[^abc]</code> - Matches any character except a, b, c</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">[a-z]</code> - Matches any character from a to z</li>
+          <li><code className="font-code bg-muted px-1 py-0.5 rounded">(...)</code> - 捕获分组</li>
+          <li><code className="font-code bg-muted px-1 py-0.5 rounded">(?:...)</code> - 非捕获分组</li>
+          <li><code className="font-code bg-muted px-1 py-0.5 rounded">[abc]</code> - 匹配 a, b, 或 c</li>
+          <li><code className="font-code bg-muted px-1 py-0.5 rounded">[^abc]</code> - 匹配除 a, b, c 之外的任何字符</li>
+          <li><code className="font-code bg-muted px-1 py-0.5 rounded">[a-z]</code> - 匹配从 a 到 z 的任何字符</li>
         </ul>
       </AccordionContent>
     </AccordionItem>
@@ -164,6 +164,8 @@ export default function RegexPlaygroundPage() {
   const [generatedData, setGeneratedData] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   
+  const scrollSyncRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     try {
       new RegExp(regex);
@@ -176,8 +178,8 @@ export default function RegexPlaygroundPage() {
   const handleCopy = useCallback((text: string, subject: string) => {
     navigator.clipboard.writeText(text);
     toast({
-      title: `${subject} copied!`,
-      description: 'The text has been copied to your clipboard.',
+      title: `${subject}已复制！`,
+      description: '文本已复制到您的剪贴板。',
     });
   }, [toast]);
 
@@ -185,8 +187,8 @@ export default function RegexPlaygroundPage() {
     if (!regex || regexError) {
       toast({
         variant: 'destructive',
-        title: 'Invalid Regular Expression',
-        description: 'Please enter a valid regex before generating data.',
+        title: '无效的正则表达式',
+        description: '请输入有效的正则表达式后再生成数据。',
       });
       return;
     }
@@ -196,11 +198,11 @@ export default function RegexPlaygroundPage() {
       const result = await generateRegexData({ regex });
       setGeneratedData(result.sampleData);
     } catch (error) {
-      console.error('Error generating data:', error);
+      console.error('生成数据时出错:', error);
       toast({
         variant: 'destructive',
-        title: 'Generation Failed',
-        description: 'Could not generate data for this regex.',
+        title: '生成失败',
+        description: '无法为此正则表达式生成数据。',
       });
     } finally {
       setIsGenerating(false);
@@ -209,7 +211,7 @@ export default function RegexPlaygroundPage() {
 
   const { matches, replacementResult } = useMemo(() => {
     if (regexError) {
-      return { matches: [], replacementResult: 'Invalid Regex' };
+      return { matches: [], replacementResult: '无效的正则表达式' };
     }
     try {
       const flags = `${globalSearch ? 'g' : ''}${ignoreCase ? 'i' : ''}${multiline ? 'm' : ''}`;
@@ -220,8 +222,8 @@ export default function RegexPlaygroundPage() {
 
       return { matches: currentMatches, replacementResult: currentReplacementResult };
     } catch (e) {
-      // This case should be covered by the useEffect, but as a fallback:
-      return { matches: [], replacementResult: 'Invalid Regex' };
+      // 此情况应由useEffect覆盖，但作为备用方案：
+      return { matches: [], replacementResult: '无效的正则表达式' };
     }
   }, [regex, testString, replacementString, globalSearch, ignoreCase, multiline, regexError]);
 
@@ -239,10 +241,10 @@ export default function RegexPlaygroundPage() {
       const startIndex = match.index!;
       const matchText = match[0];
       
-      // Text before match
+      // 匹配前的文本
       parts.push(testString.substring(lastIndex, startIndex));
       
-      // The highlighted match
+      // 高亮的匹配项
       parts.push(
         <mark key={i} className="bg-accent/40 text-accent-foreground rounded px-1">
           {matchText}
@@ -252,7 +254,7 @@ export default function RegexPlaygroundPage() {
       lastIndex = startIndex + matchText.length;
     });
   
-    // Text after the last match
+    // 最后一次匹配后的文本
     parts.push(testString.substring(lastIndex));
   
     return parts.map((part, i) => <Fragment key={i}>{part}</Fragment>);
@@ -262,8 +264,8 @@ export default function RegexPlaygroundPage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <header className="border-b sticky top-0 bg-background/95 backdrop-blur z-10">
         <div className="container mx-auto px-4 py-3">
-          <h1 className="text-2xl font-bold font-headline">Regex Playground</h1>
-          <p className="text-muted-foreground text-sm">Test, visualize, and generate data from regular expressions.</p>
+          <h1 className="text-2xl font-bold font-headline">正则表达式乐园</h1>
+          <p className="text-muted-foreground text-sm">测试、可视化和从正则表达式生成数据。</p>
         </div>
       </header>
 
@@ -272,7 +274,7 @@ export default function RegexPlaygroundPage() {
           <div className="flex flex-col gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Regular Expression</CardTitle>
+                <CardTitle>正则表达式</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-start gap-4">
@@ -280,9 +282,9 @@ export default function RegexPlaygroundPage() {
                   <Textarea
                     value={regex}
                     onChange={(e) => setRegex(e.target.value)}
-                    placeholder="Enter your regex here"
+                    placeholder="在此输入您的正则表达式"
                     className="font-code text-base flex-1 bg-card border-0 shadow-none focus-visible:ring-0"
-                    aria-label="Regular Expression Input"
+                    aria-label="正则表达式输入"
                   />
                   <span className="text-muted-foreground font-code text-lg mt-2">/</span>
                 </div>
@@ -290,28 +292,28 @@ export default function RegexPlaygroundPage() {
                 <div className="flex items-center space-x-4 mt-4 flex-wrap gap-y-2">
                   <div className="flex items-center space-x-2">
                     <Switch id="global" checked={globalSearch} onCheckedChange={setGlobalSearch} />
-                    <Label htmlFor="global">Global (g)</Label>
+                    <Label htmlFor="global">全局 (g)</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Switch id="ignoreCase" checked={ignoreCase} onCheckedChange={setIgnoreCase} />
-                    <Label htmlFor="ignoreCase">Ignore Case (i)</Label>
+                    <Label htmlFor="ignoreCase">忽略大小写 (i)</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Switch id="multiline" checked={multiline} onCheckedChange={setMultiline} />
-                    <Label htmlFor="multiline">Multiline (m)</Label>
+                    <Label htmlFor="multiline">多行 (m)</Label>
                   </div>
                 </div>
                 <div className="mt-4 border-t pt-4">
                     <Button onClick={handleGenerateData} disabled={isGenerating}>
                         {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                        Generate Sample Data
+                        生成示例数据
                     </Button>
                     {generatedData && (
                         <Card className="mt-4 bg-muted/50">
                             <CardContent className="p-4">
                                <p className="font-code text-sm break-all">{generatedData}</p>
-                                <Button variant="ghost" size="sm" className="mt-2" onClick={() => handleCopy(generatedData, 'Generated data')}>
-                                    <ClipboardCopy className="mr-2 h-4 w-4" /> Copy
+                                <Button variant="ghost" size="sm" className="mt-2" onClick={() => handleCopy(generatedData, '生成的示例数据')}>
+                                    <ClipboardCopy className="mr-2 h-4 w-4" /> 复制
                                 </Button>
                             </CardContent>
                         </Card>
@@ -322,18 +324,27 @@ export default function RegexPlaygroundPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Test String</CardTitle>
+                <CardTitle>测试字符串</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="relative">
                   <Textarea
                     value={testString}
                     onChange={(e) => setTestString(e.target.value)}
-                    placeholder="Enter your test string here"
-                    className="font-code text-sm h-48 leading-relaxed"
-                    aria-label="Test String Input"
+                    onScroll={(e) => {
+                      if (scrollSyncRef.current) {
+                        scrollSyncRef.current.scrollTop = e.currentTarget.scrollTop;
+                        scrollSyncRef.current.scrollLeft = e.currentTarget.scrollLeft;
+                      }
+                    }}
+                    placeholder="在此输入您的测试字符串"
+                    className="font-code text-sm h-48 leading-relaxed bg-transparent text-transparent caret-current"
+                    aria-label="测试字符串输入"
                   />
-                   <div className="absolute inset-0 p-3 pointer-events-none font-code text-sm leading-relaxed whitespace-pre-wrap">
+                   <div 
+                      ref={scrollSyncRef}
+                      className="absolute inset-0 px-3 py-2 pointer-events-none font-code text-sm leading-relaxed whitespace-pre-wrap overflow-hidden"
+                    >
                       {highlightedTestString}
                     </div>
                 </div>
@@ -342,25 +353,28 @@ export default function RegexPlaygroundPage() {
             
             <Card>
               <CardHeader>
-                <CardTitle>Substitution</CardTitle>
-                <CardDescription>Use $1, $2, etc. to reference captured groups.</CardDescription>
+                <CardTitle>替换</CardTitle>
+                <CardDescription>使用 $1, $2 等引用捕获的分组。</CardDescription>
               </CardHeader>
               <CardContent>
-                <Input
-                  value={replacementString}
-                  onChange={(e) => setReplacementString(e.target.value)}
-                  placeholder="Enter replacement string"
-                  className="font-code text-sm"
-                  aria-label="Replacement String Input"
-                />
-                <Card className="mt-4 bg-muted/50">
+                 <div className="relative">
+                    <Input
+                      value={replacementString}
+                      onChange={(e) => setReplacementString(e.target.value)}
+                      placeholder="输入替换字符串"
+                      className="font-code text-sm"
+                      aria-label="替换字符串输入"
+                    />
+                 </div>
+                <Card className="mt-4 bg-muted/50 relative">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Result</CardTitle>
+                    <CardTitle className="text-base">结果</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <pre className="font-code text-sm whitespace-pre-wrap break-all">{replacementResult}</pre>
-                    <Button variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => handleCopy(replacementResult, 'Replacement result')}>
+                     <Button variant="ghost" size="sm" className="absolute top-4 right-2" onClick={() => handleCopy(replacementResult, '替换结果')}>
                       <ClipboardCopy className="h-4 w-4" />
+                      复制
                     </Button>
                   </CardContent>
                 </Card>
@@ -371,14 +385,14 @@ export default function RegexPlaygroundPage() {
           <div className="lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)]">
             <Tabs defaultValue="matches" className="h-full flex flex-col">
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="matches"><Binary className="mr-2 h-4 w-4" />Matches</TabsTrigger>
-                <TabsTrigger value="explanation"><Sparkles className="mr-2 h-4 w-4" />Explanation</TabsTrigger>
-                <TabsTrigger value="cheatsheet"><BookText className="mr-2 h-4 w-4" />Cheatsheet</TabsTrigger>
+                <TabsTrigger value="matches"><Binary className="mr-2 h-4 w-4" />匹配</TabsTrigger>
+                <TabsTrigger value="explanation"><Sparkles className="mr-2 h-4 w-4" />解释</TabsTrigger>
+                <TabsTrigger value="cheatsheet"><BookText className="mr-2 h-4 w-4" />速查表</TabsTrigger>
               </TabsList>
               <TabsContent value="matches" className="flex-grow overflow-y-auto mt-4 pr-2">
                  <Card>
                     <CardHeader>
-                      <CardTitle>Match Results <Badge variant="secondary" className="ml-2">{matches.length}</Badge></CardTitle>
+                      <CardTitle>匹配结果 <Badge variant="secondary" className="ml-2">{matches.length}</Badge></CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       {matches.length > 0 ? (
@@ -386,26 +400,26 @@ export default function RegexPlaygroundPage() {
                           <Card key={index} className="bg-muted/50">
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-base flex justify-between items-center">
-                                  <span>Match {index + 1}</span>
-                                   <Button variant="ghost" size="sm" onClick={() => handleCopy(match[0], `Match ${index+1}`)}>
-                                     <ClipboardCopy className="mr-2 h-4 w-4" /> Copy Match
+                                  <span>匹配 {index + 1}</span>
+                                   <Button variant="ghost" size="sm" onClick={() => handleCopy(match[0], `匹配项 ${index+1}`)}>
+                                     <ClipboardCopy className="mr-2 h-4 w-4" /> 复制匹配项
                                    </Button>
                                 </CardTitle>
                                 <pre className="font-code text-sm p-2 bg-background rounded-md mt-1">{match[0]}</pre>
                             </CardHeader>
                             <CardContent>
-                              <p className="text-sm font-medium mb-2">Groups:</p>
+                              <p className="text-sm font-medium mb-2">分组：</p>
                               {match.length > 1 ? ([...match].slice(1).map((group, groupIndex) => (
                                 <div key={groupIndex} className="flex items-center justify-between text-sm mb-1 font-code">
                                     <span className="text-muted-foreground">${groupIndex + 1}:</span>
                                     <pre className="p-1 bg-background rounded-md">{group ?? 'undefined'}</pre>
                                 </div>
-                              ))) : (<p className="text-sm text-muted-foreground">No capturing groups found.</p>)}
+                              ))) : (<p className="text-sm text-muted-foreground">未找到捕获分组。</p>)}
                             </CardContent>
                           </Card>
                         ))
                       ) : (
-                        <p className="text-muted-foreground text-center py-8">No matches found.</p>
+                        <p className="text-muted-foreground text-center py-8">未找到匹配项。</p>
                       )}
                     </CardContent>
                   </Card>
@@ -413,8 +427,8 @@ export default function RegexPlaygroundPage() {
               <TabsContent value="explanation" className="flex-grow overflow-y-auto mt-4">
                 <Card>
                     <CardHeader>
-                      <CardTitle>Regex Explanation</CardTitle>
-                      <CardDescription>A step-by-step breakdown of your expression.</CardDescription>
+                      <CardTitle>表达式解释</CardTitle>
+                      <CardDescription>对您的表达式进行分步解析。</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-2">
                         {explanation.length > 0 ? explanation.map((part, index) => (
@@ -426,7 +440,7 @@ export default function RegexPlaygroundPage() {
                                 </div>
                             </div>
                         )) : (
-                            <p className="text-muted-foreground text-center py-8">Enter a regular expression to see its explanation.</p>
+                            <p className="text-muted-foreground text-center py-8">输入一个正则表达式以查看其解释。</p>
                         )}
                     </CardContent>
                   </Card>
@@ -434,8 +448,8 @@ export default function RegexPlaygroundPage() {
               <TabsContent value="cheatsheet" className="flex-grow overflow-y-auto mt-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Regex Cheatsheet</CardTitle>
-                    <CardDescription>A quick reference for common syntax.</CardDescription>
+                    <CardTitle>正则速查表</CardTitle>
+                    <CardDescription>常用语法的快速参考。</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <CheatSheet />
@@ -447,7 +461,7 @@ export default function RegexPlaygroundPage() {
         </div>
       </main>
       <footer className="text-center p-4 text-muted-foreground text-sm border-t">
-        <p>Powered by Next.js and Genkit</p>
+        <p>由 Next.js 和 Genkit 驱动</p>
       </footer>
     </div>
   );
