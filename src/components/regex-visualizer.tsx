@@ -131,38 +131,41 @@ const NodeComponent = ({ node }: { node: AstNode }) => {
     case 'choice': return <Choice options={node.options} />;
     case 'quantifier': return <Quantifier node={node} />;
     case 'group': return <Group node={node} />;
-    case 'char-class': return <Terminal text={node.raw} description={node.description} className="bg-emerald-100 text-emerald-800" />;
-    case 'anchor': return <Terminal text={node.raw} description={node.description} className="bg-violet-100 text-violet-800" />;
-    case 'literal': return <Terminal text={node.value} description={`匹配字面量: "${node.value}"`} className="bg-sky-100 text-sky-800" />;
+    case 'char-class': 
+        const text = node.raw === '\\d' ? '数字' : node.raw;
+        return <Terminal text={text} description={node.description} className="bg-emerald-200 text-emerald-900 border-emerald-400" />;
+    case 'anchor': return <Terminal text={node.raw} description={node.description} className="bg-violet-200 text-violet-900 border-violet-400" />;
+    case 'literal': return <Terminal text={node.value} description={`匹配字面量: "${node.value}"`} className="bg-sky-200 text-sky-900 border-sky-400" />;
     default: return null;
   }
 };
+
+const Path = ({className}: {className?: string}) => <div className={cn("w-8 h-1 bg-red-500", className)} />;
 
 const Sequence = ({ parts }: { parts: AstNode[] }) => (
   <div className="flex items-center">
     {parts.map((part, index) => (
       <React.Fragment key={index}>
         <NodeComponent node={part} />
-        {index < parts.length - 1 && <div className="w-6 h-0.5 bg-gray-400" />}
+        {index < parts.length - 1 && <Path />}
       </React.Fragment>
     ))}
   </div>
 );
 
 const Choice = ({ options }: { options: AstNode[] }) => (
-  <div className="flex items-center">
-    <div className="w-6 h-0.5 bg-gray-400" />
-    <div className="flex flex-col">
+  <div className="inline-flex items-center">
+    <div className="flex flex-col gap-2">
       {options.map((option, index) => (
-        <div key={index} className="flex items-center relative py-2 first:pt-0 last:pb-0">
-          <div className="absolute left-0 w-3 h-full border-gray-400 border-y-2 first:border-t-0 last:border-b-0" />
-          <div className={cn("absolute left-0 w-3 h-0.5 bg-gray-400", options.length > 1 ? "border-l-2 border-gray-400 rounded-l-md" : "")} />
-          <div className="mx-2"><NodeComponent node={option} /></div>
-          <div className="absolute right-0 w-3 h-0.5 bg-gray-400 border-r-2 border-gray-400 rounded-r-md" />
+         <div key={index} className="flex items-center">
+            <div className="w-4 h-1 bg-red-500" />
+            <div className="w-4 h-full border-red-500 border-y-2 first:border-t-0 last:border-b-0 border-r-2 rounded-r-md" />
+            <div className="mx-2"><NodeComponent node={option} /></div>
+            <div className="w-4 h-full border-red-500 border-y-2 first:border-t-0 last:border-b-0 border-l-2 rounded-l-md" />
+            <div className="w-4 h-1 bg-red-500" />
         </div>
       ))}
     </div>
-    <div className="w-6 h-0.5 bg-gray-400" />
   </div>
 );
 
@@ -170,42 +173,58 @@ const Quantifier = ({ node }: { node: AstNode & { type: 'quantifier' } }) => {
   let text = '';
   switch(node.kind) {
       case '*': text = '0 或更多次'; break;
-      case '+': text = '1 或更多次'; break;
+      case '+': text = '1 或 更多次'; break;
       case '?': text = '0 或 1 次'; break;
   }
   if (!node.greedy) text += ' (非贪婪)';
-
+  
   return (
-    <div className="inline-flex flex-col items-center">
-      <div className="flex items-center w-full">
-        <div className="w-6 h-0.5 bg-gray-400" />
-        <div className="flex-grow pt-4">
-          <div className="text-center text-xs text-muted-foreground -mt-3">{text}</div>
-          <div className="border-t-2 border-dashed border-gray-400" />
+    <div className="flex flex-col items-center">
+        {/* Bypass path for ? and * */}
+        {(node.kind === '?' || node.kind === '*') && (
+            <div className='flex items-center w-full'>
+                <div className='w-4 h-4 border-b-2 border-r-2 border-red-500 rounded-br-md' />
+                <div className='flex-grow h-0 border-b-2 border-red-500' />
+                <div className='w-4 h-4 border-b-2 border-l-2 border-red-500 rounded-bl-md' />
+            </div>
+        )}
+        
+        {/* Main content path */}
+        <div className="flex items-center">
+            <NodeComponent node={node.content} />
         </div>
-        <div className="w-6 h-0.5 bg-gray-400" />
-      </div>
-      <div className="flex items-center w-full">
-         <div className="h-4 w-6 border-l-2 border-b-2 border-dashed border-gray-400 rounded-bl-md"></div>
-         <NodeComponent node={node.content} />
-         <div className="h-4 w-6 border-r-2 border-b-2 border-dashed border-gray-400 rounded-br-md"></div>
-      </div>
+        
+        {/* Loop path for + and * */}
+        {(node.kind === '+' || node.kind === '*') && (
+            <div className='flex items-center w-full'>
+                <div className='w-4 h-4 border-t-2 border-r-2 border-red-500 rounded-tr-md' />
+                <div className='flex-grow h-0 border-b-2 border-red-500 border-dashed' />
+                <div className='w-4 h-4 border-t-2 border-l-2 border-red-500 rounded-tl-md' />
+            </div>
+        )}
+        <p className='text-xs text-muted-foreground mt-1'>{text}</p>
     </div>
   );
 };
 
+
 const Group = ({ node }: { node: AstNode & { type: 'group' } }) => {
   let text = node.capturing ? `分组 #${node.index}` : '非捕获分组';
   return (
-    <div className="p-2 border border-gray-400 rounded-lg bg-gray-50">
-      <div className="text-xs text-center text-muted-foreground -mt-1 mb-1">{text}</div>
+    <div className="p-3 border-2 border-dashed border-gray-400 rounded-lg bg-gray-50/50 relative mx-2">
+      <div className="absolute -top-3 left-2 text-xs text-center text-muted-foreground bg-muted/50 px-1">{text}</div>
       <NodeComponent node={node.content} />
     </div>
   );
 };
 
-const Terminal = ({ text, description, className }: { text: string; description: string; className?: string }) => (
-  <div title={description} className={cn("px-4 py-2 border border-gray-400 rounded-lg font-code text-center min-w-[40px] shadow-sm", className)}>
+const Terminal = ({ text, description, className, variant = 'box' }: { text: string; description: string; className?: string; variant?: 'box' | 'start' | 'end' }) => (
+  <div title={description} className={cn(
+      "px-4 py-2 border-2 rounded-lg font-code text-center min-w-[40px] shadow-sm", 
+      variant === 'start' && 'h-10 w-10 flex items-center justify-center rounded-full bg-green-500 text-white border-green-700',
+      variant === 'end' && 'h-10 w-10 flex items-center justify-center rounded-full bg-slate-700 text-white border-slate-900',
+      className
+    )}>
     {text}
   </div>
 );
@@ -232,16 +251,21 @@ const RegexVisualizer = ({ regex }: { regex: string }) => {
 
   return (
     <div className="w-full">
-      <div className="overflow-x-auto p-4 bg-muted/50 rounded-lg" style={{ transform: `scale(${zoom/100})`, transformOrigin: 'top left' }}>
-        <div className="inline-flex items-center">
-          <Terminal text="开始" description="正则表达式的开始" className="bg-gray-200" />
-          <div className="w-6 h-0.5 bg-gray-400" />
-          <NodeComponent node={ast} />
-          <div className="w-6 h-0.5 bg-gray-400" />
-          <Terminal text="结束" description="正则表达式的结束" className="bg-gray-200" />
+      <div className="overflow-x-auto p-8 bg-muted/50 rounded-lg">
+        <div 
+          className="inline-block" 
+          style={{ transform: `scale(${zoom/100})`, transformOrigin: 'center' }}
+        >
+            <div className="inline-flex items-center">
+              <Terminal text="" description="正则表达式的开始" variant="start" />
+              <Path />
+              <NodeComponent node={ast} />
+              <Path />
+              <Terminal text="" description="正则表达式的结束" variant="end" />
+            </div>
         </div>
       </div>
-       <div className="flex items-center gap-4 mt-4 p-2 rounded-lg bg-muted/50">
+       <div className="flex items-center justify-center gap-4 mt-4 p-2 rounded-lg bg-muted/50">
           <Label htmlFor="zoom-slider" className="text-sm font-medium">放大</Label>
           <Slider
             id="zoom-slider"
