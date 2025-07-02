@@ -149,6 +149,12 @@ export default function RegexPlaygroundPage() {
     handleCopy(allMatchesText, '所有匹配结果');
   }, [matches, handleCopy]);
 
+  const handleCopyAllGroups = useCallback((match: RegExpMatchArray, matchIndex: number) => {
+    if (match.length <= 1) return;
+    const allGroupsText = [...match].slice(1).map(g => g ?? '').join('\n');
+    handleCopy(allGroupsText, `匹配 ${matchIndex + 1} 的所有分组`);
+  }, [handleCopy]);
+
   const handleGenerateAndInsertData = useCallback(async () => {
     if (!regex || regexError) {
       toast({
@@ -407,7 +413,18 @@ export default function RegexPlaygroundPage() {
                               
                               {match.length > 1 ? (
                                 <div>
-                                  <p className="text-sm font-medium mb-2">捕获分组：</p>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <p className="text-sm font-medium">捕获分组：</p>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-7"
+                                      onClick={() => handleCopyAllGroups(match, index)}
+                                    >
+                                      <ClipboardCopy className="mr-2 h-3 w-3" />
+                                      复制分组
+                                    </Button>
+                                  </div>
                                   <div className="space-y-1">
                                     {[...match].slice(1).map((group, groupIndex) => (
                                       <div key={groupIndex} className="flex items-center justify-between text-sm font-code gap-2 bg-background p-1.5 rounded-md border">
