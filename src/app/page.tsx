@@ -81,12 +81,55 @@ const CheatSheet = () => (
     <AccordionItem value="groups">
       <AccordionTrigger>分组和范围</AccordionTrigger>
       <AccordionContent>
-         <ul className="space-y-2 text-sm">
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">(...)</code> - 捕获分组</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">(?:...)</code> - 非捕获分组</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">[abc]</code> - 匹配 a, b, 或 c</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">[^abc]</code> - 匹配除 a, b, c 之外的任何字符</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">[a-z]</code> - 匹配从 a 到 z 的任何字符</li>
+        <ul className="space-y-4 text-sm">
+            <li>
+                <code className="font-code bg-muted px-1 py-0.5 rounded">(pattern)</code>
+                <p className="pl-2 mt-1 text-muted-foreground">分组并捕获：匹配 'pattern' 并捕获匹配项。可通过 $1, $2 等引用。</p>
+            </li>
+            <li>
+                <code className="font-code bg-muted px-1 py-0.5 rounded">(?:pattern)</code>
+                <p className="pl-2 mt-1 text-muted-foreground">分组但不捕获：当您需要对多个项进行分组但又不想保存匹配项时很有用。例如，`industr(?:y|ies)` 比 `industry|industries` 更高效。</p>
+            </li>
+            <li>
+                <code className="font-code bg-muted px-1 py-0.5 rounded">(?&lt;name&gt;pattern)</code>
+                <p className="pl-2 mt-1 text-muted-foreground">命名捕获分组：捕获 'pattern' 的匹配项，并为其分配一个名称 'name'。</p>
+            </li>
+            <li>
+                <code className="font-code bg-muted px-1 py-0.5 rounded">[abc]</code>
+                <p className="pl-2 mt-1 text-muted-foreground">字符集：匹配 'a', 'b', 或 'c'。</p>
+            </li>
+            <li>
+                <code className="font-code bg-muted px-1 py-0.5 rounded">[^abc]</code>
+                <p className="pl-2 mt-1 text-muted-foreground">排除型字符集：匹配任何非 'a', 'b', 或 'c' 的字符。</p>
+            </li>
+            <li>
+                <code className="font-code bg-muted px-1 py-0.5 rounded">[a-z]</code>
+                <p className="pl-2 mt-1 text-muted-foreground">范围字符集：匹配从 'a' 到 'z' 的任何字符。</p>
+            </li>
+            <li className="!mt-6 pt-4 border-t">
+                <p className="font-bold text-base">断言（零宽度）</p>
+                <p className="text-muted-foreground">它们只断言某个位置是否满足条件，不消耗字符。</p>
+            </li>
+            <li>
+                <code className="font-code bg-muted px-1 py-0.5 rounded">(?=pattern)</code>
+                <p className="pl-2 mt-1 text-muted-foreground">正向先行断言：断言当前位置右侧能匹配 'pattern'。</p>
+            </li>
+            <li>
+                <code className="font-code bg-muted px-1 py-0.5 rounded">(?!pattern)</code>
+                <p className="pl-2 mt-1 text-muted-foreground">负向先行断言：断言当前位置右侧不能匹配 'pattern'。</p>
+            </li>
+            <li>
+                <code className="font-code bg-muted px-1 py-0.5 rounded">(?&lt;=pattern)</code>
+                <p className="pl-2 mt-1 text-muted-foreground">正向后行断言：断言当前位置左侧能匹配 'pattern'。</p>
+            </li>
+            <li>
+                <code className="font-code bg-muted px-1 py-0.5 rounded">(?&lt;!pattern)</code>
+                <p className="pl-2 mt-1 text-muted-foreground">负向后行断言：断言当前位置左侧不能匹配 'pattern'。</p>
+            </li>
+             <li>
+                <code className="font-code bg-muted px-1 py-0.5 rounded">(?&gt;pattern)</code>
+                <p className="pl-2 mt-1 text-muted-foreground">原子分组：匹配 'pattern'，但禁止引擎在该分组内进行回溯。</p>
+            </li>
         </ul>
       </AccordionContent>
     </AccordionItem>
@@ -174,10 +217,10 @@ export default function RegexPlaygroundPage() {
   const handleCopyAllOfOneGroup = useCallback((groupIndex: number) => {
     if (matches.length === 0) return;
     const groupNText = matches
-        .map(match => match[groupIndex + 1])
+        .map(match => match[groupIndex])
         .filter(g => g !== undefined)
         .join('\n');
-    handleCopy(groupNText, `所有匹配中的分组 ${groupIndex + 1} 的内容`);
+    handleCopy(groupNText, `所有匹配中的分组 ${groupIndex} 的内容`);
   }, [matches, handleCopy]);
 
   const handleGenerateAndInsertData = useCallback(async () => {
@@ -427,7 +470,7 @@ export default function RegexPlaygroundPage() {
                                 key={groupIndex}
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleCopyAllOfOneGroup(groupIndex - 1)}
+                                onClick={() => handleCopyAllOfOneGroup(groupIndex)}
                                 title={`复制所有匹配中的分组 ${groupIndex} 的内容`}
                               >
                                 <ClipboardCopy className="mr-2 h-3 w-3" />
