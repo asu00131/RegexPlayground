@@ -95,9 +95,9 @@ const CheatSheet = () => (
 
 export default function RegexPlaygroundPage() {
   const { toast } = useToast();
-  const [regex, setRegex] = useState('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}|<([a-z]+)>.*?<\\/\\1>|1[3-9]\\d{9}');
-  const [testString, setTestString] = useState('My email is example@domain.com, but not fake@domain.\nThis is a <b>bold</b> tag and this is a <i>italic</i> one.\nPhone numbers: 13912345678, 18687654321.\nInvalid phone: 12011112222.');
-  const [replacementString, setReplacementString] = useState('【前】$2【-中间-】$1【后】');
+  const [regex, setRegex] = useState('([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})|<(div|p|b|i).*?>([\\s\\S]*?)<\\/\\3>|1[3-9]\\d{9}');
+  const [testString, setTestString] = useState('My email is example@domain.com, but not fake@domain.\nThis is a <b>bold</b> tag and this is a <div><p>italic</p></div> one.\nPhone numbers: 13912345678, 18687654321.\nInvalid phone: 12011112222.');
+  const [replacementString, setReplacementString] = useState('【$1】-【$2】');
   
   const [globalSearch, setGlobalSearch] = useState(true);
   const [ignoreCase, setIgnoreCase] = useState(false);
@@ -166,17 +166,9 @@ export default function RegexPlaygroundPage() {
   }, [matches, handleCopy]);
 
   const handleGenerateAndInsertData = useCallback(async () => {
-    if (!regex || regexError) {
-      toast({
-        variant: 'destructive',
-        title: '无效的正则表达式',
-        description: '请输入有效的正则表达式后再生成数据。',
-      });
-      return;
-    }
     setIsInsertingSample(true);
     try {
-      const result = await generateRegexData({ regex });
+      const result = await generateRegexData({});
       setTestString((prevTestString) =>
         prevTestString ? `${result.sampleData}\n${prevTestString}` : result.sampleData
       );
@@ -189,12 +181,12 @@ export default function RegexPlaygroundPage() {
       toast({
         variant: 'destructive',
         title: '生成失败',
-        description: '无法为此正则表达式生成数据。',
+        description: '无法生成示例数据。',
       });
     } finally {
       setIsInsertingSample(false);
     }
-  }, [regex, regexError, toast]);
+  }, [toast]);
 
   const highlightedTestString = useMemo(() => {
     if (regexError || !testString || matches.length === 0) {
@@ -421,7 +413,7 @@ export default function RegexPlaygroundPage() {
                                   </Button>
                               </div>
                               
-                              {match.length > 1 ? (
+                              {match.length > 1 && [...match].slice(1).some(g => g !== undefined) ? (
                                 <div>
                                   <div className="flex items-center justify-between mb-2">
                                     <p className="text-sm font-medium">捕获分组：</p>
@@ -437,9 +429,9 @@ export default function RegexPlaygroundPage() {
                                   </div>
                                   <div className="space-y-1">
                                     {[...match].slice(1).map((group, groupIndex) => (
-                                      <div key={groupIndex} className="flex items-center justify-between text-sm font-code gap-2 bg-background p-1.5 rounded-md border">
+                                      group !== undefined && <div key={groupIndex} className="flex items-center justify-between text-sm font-code gap-2 bg-background p-1.5 rounded-md border">
                                           <span className="text-muted-foreground">${groupIndex + 1}:</span>
-                                          <pre className="flex-grow overflow-x-auto mr-2">{group ?? 'undefined'}</pre>
+                                          <pre className="flex-grow overflow-x-auto mr-2">{group}</pre>
                                           <div className="flex items-center gap-1 shrink-0">
                                             {index === 0 && (
                                               <Button
@@ -453,7 +445,7 @@ export default function RegexPlaygroundPage() {
                                                 复制所有
                                               </Button>
                                             )}
-                                            <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => handleCopy(group ?? '', `分组 ${groupIndex + 1}`)}>
+                                            <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => handleCopy(group, `分组 ${groupIndex + 1}`)}>
                                               <ClipboardCopy className="h-3 w-3" />
                                               <span className="sr-only">复制分组 {groupIndex + 1}</span>
                                             </Button>

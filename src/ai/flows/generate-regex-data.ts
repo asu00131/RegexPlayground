@@ -12,17 +12,13 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const GenerateRegexDataInputSchema = z.object({
-  regex: z
-    .string()
-    .describe('The regular expression to generate sample data from.'),
-});
+const GenerateRegexDataInputSchema = z.object({});
 export type GenerateRegexDataInput = z.infer<typeof GenerateRegexDataInputSchema>;
 
 const GenerateRegexDataOutputSchema = z.object({
   sampleData: z
     .string()
-    .describe('A string of sample data that conforms to the provided regular expression.'),
+    .describe('A string of rich sample data for testing regular expressions.'),
 });
 export type GenerateRegexDataOutput = z.infer<typeof GenerateRegexDataOutputSchema>;
 
@@ -34,9 +30,21 @@ const generateRegexDataPrompt = ai.definePrompt({
   name: 'generateRegexDataPrompt',
   input: {schema: GenerateRegexDataInputSchema},
   output: {schema: GenerateRegexDataOutputSchema},
-  prompt: `You are a regular expression expert. Please generate a string of sample data that conforms to the following regular expression:\n\n{{regex}}\n\nEnsure that the generated data is valid according to the regex. Do not provide any explanations, just the generated sample data. For each request, provide a different, unique, and random result.`,
+  prompt: `生成一组用于正则表达式测试的丰富文本数据。请确保数据中包含以下各类示例，以便于全面测试：
+
+- 合法与非法的邮箱地址 (例如: test@example.com, invalid-email, user@domain)
+- HTML 标签 (例如: \`<div><p class="greeting">Hello</p></div>\`, \`空标签 <br/>\`)
+- 中国大陆手机号 (例如: 13812345678, 1234567)
+- 重复的单词 (例如: "this is is a test")
+- 引号包裹的文本 (例如: '单引号' and "双引号")
+- 多种日期格式 (例如: 2023-12-25, 25/12/2023)
+- 包含特殊字符的密码 (例如: Abc!123, P@ssw0rd_)
+- Unicode 字符 (例如: 你好世界, 🚀)
+- 多行日志条目 (例如: \`[INFO] User logged in.\`, \`[ERROR] Failed to connect to DB.\`)
+
+请直接生成这些混合在一起的文本数据，不要添加任何额外的标题或解释。`,
   config: {
-    temperature: 1.0,
+    temperature: 0.8,
   },
 });
 
