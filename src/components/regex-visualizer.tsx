@@ -14,7 +14,7 @@ type AstNode =
   | { type: 'choice', options: AstNode[] }
   | { type: 'quantifier', kind: string, greedy: boolean, content: AstNode }
   | { type: 'group', capturing: boolean, index?: number, content: AstNode, label?: string }
-  | { type: 'char-class', raw: string, description: string, label: string }
+  | { type: 'char-class', raw: string, description: string, label: string, content?: string }
   | { type: 'anchor', raw: string, description: string, label: string }
   | { type: 'literal', value: string, raw: string, description: string, label: string }
   | { type: 'backreference', raw: string, groupIndex: number, label: string, description: string };
@@ -42,7 +42,7 @@ function parse(regex: string): { ast: AstNode | null, error: string | null } {
         return { ast: null, error: e.message };
     }
 
-    const tokens = regex.match(/\\[1-9]\d*|\\.|[+*?](?:\?)?|\{\d+,?\d*\}|\[\^?.*?\]|\(\?[:=!<]|\(|\)|\||\^|\$|[^\\()\[\]+*?{}^$|]+/g) || [];
+    const tokens = regex.match(/\\[1-9]\d*|\\.|[+*?](?:\?)?|\{\d+,?\d*\}|\[\^?.*?\]|\(\?[:=!<]|\(|\)|\||\^|\$|\.|[^\\()\[\].+*?{}^$|]+/g) || [];
     let position = 0;
     let groupIndex = 1;
 
@@ -147,14 +147,14 @@ function parse(regex: string): { ast: AstNode | null, error: string | null } {
             if(commonRanges[content]) {
                 label = commonRanges[content].label;
                 description = commonRanges[content].desc;
+                return { type: 'char-class', raw: token, description, label: (inverted ? '非: ' : '') + label };
             } else {
                  label = '字符集';
                  description = inverted 
                      ? `匹配除 "${content}" 以外的任意字符。` 
                      : `匹配 "${content}" 中的任意一个字符。`;
+                return { type: 'char-class', raw: token, description, label: (inverted ? '非: ' : '') + label, content };
             }
-
-            return { type: 'char-class', raw: token, description, label: (inverted ? '非: ' : '') + label };
         }
         
         if (token.startsWith('\\') && token.length > 1) {
@@ -288,10 +288,10 @@ const Group = ({ node }: { node: AstNode & { type: 'group' } }) => {
   );
 };
 
-const NodeBox = ({ label, raw, description, className }: { label: string; raw?: string; description: string; className?: string }) => (
+const NodeBox = ({ label, content, description, className }: { label: string; content?: string; description: string; className?: string }) => (
     <div title={description} className={cn("px-3 py-1.5 border-2 rounded-md text-center shadow-sm min-w-[50px] bg-card", className)}>
         <div className="font-semibold text-card-foreground">{label}</div>
-        {raw && raw !== label && <div className="text-xs text-muted-foreground font-code mt-0.5">{raw}</div>}
+        {content && <div className="text-xs text-muted-foreground font-code mt-0.5">{content}</div>}
     </div>
 );
 
@@ -302,7 +302,9 @@ const Terminal = ({ node }: { node: AstNode & { type: 'literal' | 'char-class' |
     if (node.type === 'literal') className = 'border-sky-400';
     if (node.type === 'backreference') className = 'border-orange-400';
 
-    return <NodeBox label={node.label} raw={node.raw} description={node.description} className={className} />;
+    const content = (node.type === 'char-class' && node.content) ? node.content : undefined;
+
+    return <NodeBox label={node.label} content={content} description={node.description} className={className} />;
 };
 
 const StartNode = () => (
@@ -372,3 +374,5 @@ const RegexVisualizer = ({ regex }: { regex: string }) => {
 };
 
 export default RegexVisualizer;
+
+    
