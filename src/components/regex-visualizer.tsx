@@ -12,7 +12,7 @@ type AstNode =
   | { type: 'sequence', parts: AstNode[] }
   | { type: 'choice', options: AstNode[] }
   | { type: 'quantifier', kind: string, greedy: boolean, content: AstNode }
-  | { type: 'group', capturing: boolean, index?: number, content: AstNode }
+  | { type: 'group', capturing: boolean, index?: number, content: AstNode, label?: string }
   | { type: 'char-class', raw: string, description: string }
   | { type: 'anchor', raw: string, description: string }
   | { type: 'literal', value: string };
@@ -61,6 +61,9 @@ function parse(regex: string): { ast: AstNode | null, error: string | null } {
             position++;
             const greedy = nextToken.length === 1 || nextToken[1] !== '?';
             node = { type: 'quantifier', kind: nextToken[0], greedy, content: node };
+        } else if (nextToken && nextToken.startsWith('{')) {
+            position++;
+            node = { type: 'quantifier', kind: nextToken, greedy: true, content: node };
         }
         return node;
     }
@@ -68,9 +71,20 @@ function parse(regex: string): { ast: AstNode | null, error: string | null } {
     function parsePrimary(): AstNode {
         const token = tokens[position++];
         
-        if (token.startsWith('(')) {
-            const capturing = !token.startsWith('(?:');
-            let content;
+        if (token && token.startsWith('(')) {
+            let capturing = false;
+            let label = '';
+            
+            if (token === '(') {
+              capturing = true;
+              label = `分组 #${groupIndex}`;
+            } else if (token === '(?:') {
+              label = '非捕获分组';
+            } else if (token === '(?=') {
+              label = '正向先行断言';
+            } else if (token === '(?!') {
+              label = '负向先行断言';
+            }
 
             const options = [];
             options.push(parseSequence());
@@ -80,6 +94,7 @@ function parse(regex: string): { ast: AstNode | null, error: string | null } {
                 options.push(parseSequence());
             }
             
+            let content: AstNode;
             if (options.length > 1) {
                 content = { type: 'choice', options };
             } else {
@@ -90,7 +105,7 @@ function parse(regex: string): { ast: AstNode | null, error: string | null } {
                  throw new Error("括号不匹配");
             }
             position++; // Consume ')'
-            return { type: 'group', capturing, index: capturing ? groupIndex++ : undefined, content };
+            return { type: 'group', capturing, index: capturing ? groupIndex++ : undefined, content, label };
         }
 
         const description = tokenDescriptions[token];
@@ -98,7 +113,7 @@ function parse(regex: string): { ast: AstNode | null, error: string | null } {
             return { type: description.type, raw: token, description: description.description };
         }
 
-        if (token.startsWith('[') && token.endsWith(']')) {
+        if (token && token.startsWith('[') && token.endsWith(']')) {
             return { type: 'char-class', raw: token, description: '字符集。匹配其中任意一个字符。' };
         }
 
@@ -175,6 +190,11 @@ const Quantifier = ({ node }: { node: AstNode & { type: 'quantifier' } }) => {
       case '*': text = '0 或更多次'; break;
       case '+': text = '1 或 更多次'; break;
       case '?': text = '0 或 1 次'; break;
+      default:
+        if (node.kind.startsWith('{')) {
+            text = `重复 ${node.kind.slice(1, -1)} 次`;
+        }
+        break;
   }
   if (!node.greedy) text += ' (非贪婪)';
   
@@ -209,7 +229,7 @@ const Quantifier = ({ node }: { node: AstNode & { type: 'quantifier' } }) => {
 
 
 const Group = ({ node }: { node: AstNode & { type: 'group' } }) => {
-  let text = node.capturing ? `分组 #${node.index}` : '非捕获分组';
+  const text = node.label || (node.capturing ? `分组 #${node.index}` : '非捕获分组');
   return (
     <div className="p-3 border-2 border-dashed border-gray-400 rounded-lg bg-gray-50/50 relative mx-2">
       <div className="absolute -top-3 left-2 text-xs text-center text-muted-foreground bg-muted/50 px-1">{text}</div>
