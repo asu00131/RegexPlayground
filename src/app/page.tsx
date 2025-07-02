@@ -94,7 +94,7 @@ const CheatSheet = () => (
 
 export default function RegexPlaygroundPage() {
   const { toast } = useToast();
-  const [regex, setRegex] = useState('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$|<.*?>|1[3-9]\\d{9}');
+  const [regex, setRegex] = useState('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}|<([a-z]+)>.*?<\\/\\1>|1[3-9]\\d{9}');
   const [testString, setTestString] = useState('My email is example@domain.com, but not fake@domain.\nThis is a <b>bold</b> tag and this is a <i>italic</i> one.\nPhone numbers: 13912345678, 18687654321.\nInvalid phone: 12011112222.');
   const [replacementString, setReplacementString] = useState('【前】$2【-中间-】$1【后】');
   

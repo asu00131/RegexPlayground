@@ -16,7 +16,8 @@ type AstNode =
   | { type: 'group', capturing: boolean, index?: number, content: AstNode, label?: string }
   | { type: 'char-class', raw: string, description: string, label: string }
   | { type: 'anchor', raw: string, description: string, label: string }
-  | { type: 'literal', value: string, raw: string, description: string, label: string };
+  | { type: 'literal', value: string, raw: string, description: string, label: string }
+  | { type: 'backreference', raw: string, groupIndex: number, label: string, description: string };
 
 const tokenInfo: Record<string, { type: 'char-class' | 'anchor', description: string, label: string }> = {
     '\\d': { type: 'char-class', description: '匹配任何数字 (0-9)。', label: '数字' },
@@ -41,7 +42,7 @@ function parse(regex: string): { ast: AstNode | null, error: string | null } {
         return { ast: null, error: e.message };
     }
 
-    const tokens = regex.match(/\\.|[+*?](?:\?)?|\{\d+,?\d*\}|\[\^?.*?\]|\(\?[:=!<]|\(|\)|\||\^|\$|[^\\()\[\]+*?{}^$|]+/g) || [];
+    const tokens = regex.match(/\\[1-9]\d*|\\.|[+*?](?:\?)?|\{\d+,?\d*\}|\[\^?.*?\]|\(\?[:=!<]|\(|\)|\||\^|\$|[^\\()\[\]+*?{}^$|]+/g) || [];
     let position = 0;
     let groupIndex = 1;
 
@@ -71,6 +72,11 @@ function parse(regex: string): { ast: AstNode | null, error: string | null } {
     function parsePrimary(): AstNode {
         const token = tokens[position++];
         
+        if (token.startsWith('\\') && /^[1-9]\d*$/.test(token.substring(1))) {
+            const groupNum = parseInt(token.substring(1));
+            return { type: 'backreference', raw: token, groupIndex: groupNum, label: `引用 #${groupNum}`, description: `匹配对第 ${groupNum} 个捕获分组的引用。` };
+        }
+
         if (token && token.startsWith('(')) {
             let capturing = false;
             let label = '';
@@ -188,6 +194,7 @@ const NodeComponent = ({ node }: { node: AstNode }) => {
     case 'char-class': 
     case 'anchor':
     case 'literal':
+    case 'backreference':
       return <Terminal node={node} />;
     default: return null;
   }
@@ -288,11 +295,12 @@ const NodeBox = ({ label, raw, description, className }: { label: string; raw?: 
     </div>
 );
 
-const Terminal = ({ node }: { node: AstNode & { type: 'literal' | 'char-class' | 'anchor' } }) => {
+const Terminal = ({ node }: { node: AstNode & { type: 'literal' | 'char-class' | 'anchor' | 'backreference' } }) => {
     let className = '';
     if (node.type === 'char-class') className = 'border-emerald-400';
     if (node.type === 'anchor') className = 'border-violet-400';
     if (node.type === 'literal') className = 'border-sky-400';
+    if (node.type === 'backreference') className = 'border-orange-400';
 
     return <NodeBox label={node.label} raw={node.raw} description={node.description} className={className} />;
 };
