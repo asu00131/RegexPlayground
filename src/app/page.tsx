@@ -243,6 +243,8 @@ export default function RegexPlaygroundPage() {
                 <div className="flex items-start gap-4 bg-muted/50 rounded-md p-2">
                   <span className="text-muted-foreground font-code text-lg mt-2">/</span>
                   <Textarea
+                    id="regex-input"
+                    name="regex"
                     value={regex}
                     onChange={(e) => setRegex(e.target.value)}
                     placeholder="在此输入您的正则表达式"
@@ -290,16 +292,18 @@ export default function RegexPlaygroundPage() {
                 <CardTitle className="font-bold">测试字符串</CardTitle>
               </CardHeader>
               <CardContent>
-                 <div className="relative h-48 border rounded-md font-code text-sm leading-6">
+                 <div className="relative h-48 border rounded-md">
                     <div
                       ref={scrollSyncRef}
                       aria-hidden="true"
-                      className="absolute inset-0 m-0 overflow-auto pointer-events-none p-2 break-words"
+                      className="absolute inset-0 m-0 overflow-auto pointer-events-none py-2 px-3 whitespace-pre-wrap font-code text-base md:text-sm leading-relaxed"
                     >
                       {highlightedTestString}
                     </div>
                     <Textarea
                       ref={textareaRef}
+                      id="test-string-input"
+                      name="testString"
                       value={testString}
                       onChange={(e) => setTestString(e.target.value)}
                       onScroll={(e) => {
@@ -309,7 +313,7 @@ export default function RegexPlaygroundPage() {
                         }
                       }}
                       placeholder="在此输入您的测试字符串"
-                      className="absolute inset-0 m-0 h-full w-full bg-transparent text-transparent caret-foreground resize-none p-2 focus-visible:ring-0 border-0 whitespace-pre-wrap"
+                      className="absolute inset-0 m-0 h-full w-full bg-transparent text-transparent caret-foreground resize-none py-2 px-3 focus-visible:ring-0 border-0 whitespace-pre-wrap font-code text-base md:text-sm leading-relaxed"
                       spellCheck="false"
                       aria-label="测试字符串输入"
                     />
@@ -325,6 +329,8 @@ export default function RegexPlaygroundPage() {
               <CardContent>
                  <div className="relative">
                     <Input
+                      id="replacement-string-input"
+                      name="replacementString"
                       value={replacementString}
                       onChange={(e) => setReplacementString(e.target.value)}
                       placeholder="输入替换字符串"
@@ -337,7 +343,11 @@ export default function RegexPlaygroundPage() {
                     <CardTitle className="text-base font-bold">结果</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <pre className="font-code text-sm whitespace-pre-wrap break-all">{replacementResult}</pre>
+                    <div className="font-code text-sm whitespace-pre-wrap break-all">
+                      {replacementResult.split('\n').map((line, idx) => (
+                        <div key={idx}>{line || '\u00A0'}</div>
+                      ))}
+                    </div>
                      <Button variant="ghost" size="sm" className="absolute top-4 right-2" onClick={() => handleCopy(replacementResult, '替换结果')}>
                       <ClipboardCopy className="h-4 w-4" />
                     </Button>
