@@ -586,7 +586,7 @@ export default function RegexPlaygroundPage() {
                         <div key={idx}>{line || '\u00A0'}</div>
                       ))}
                     </div>
-                     <Button variant="ghost" size="sm" className="absolute top-4 right-2" onClick={()={() => handleCopy(replacementResult, '替换结果')}}>
+                     <Button variant="ghost" size="sm" className="absolute top-4 right-2" onClick={() => handleCopy(replacementResult, '替换结果')}>
                       <ClipboardCopy className="h-4 w-4" />
                     </Button>
                   </CardContent>
