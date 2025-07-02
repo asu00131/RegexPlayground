@@ -33,6 +33,7 @@ import {
   Sparkles,
   AlertCircle,
   Loader2,
+  ClipboardPaste,
 } from 'lucide-react';
 import RegexVisualizer from '@/components/regex-visualizer';
 
@@ -125,6 +126,18 @@ export default function RegexPlaygroundPage() {
       description: '文本已复制到您的剪贴板。',
     });
   }, [toast]);
+
+  const handleInsertData = useCallback(() => {
+    if (generatedData) {
+      setTestString((prevTestString) =>
+        prevTestString ? `${generatedData}\n${prevTestString}` : generatedData
+      );
+      toast({
+        title: '数据已插入',
+        description: '生成的示例数据已添加到测试字符串的开头。',
+      });
+    }
+  }, [generatedData, toast]);
 
   const handleGenerateData = useCallback(async () => {
     if (!regex || regexError) {
@@ -277,9 +290,14 @@ export default function RegexPlaygroundPage() {
                         <Card className="mt-4 bg-muted/50">
                             <CardContent className="p-4">
                                <p className="font-code text-sm break-all">{generatedData}</p>
-                                <Button variant="ghost" size="sm" className="mt-2" onClick={() => handleCopy(generatedData, '生成的示例数据')}>
-                                    <ClipboardCopy className="mr-2 h-4 w-4" /> 复制
-                                </Button>
+                                <div className="mt-2 flex items-center gap-2">
+                                  <Button variant="ghost" size="sm" onClick={() => handleCopy(generatedData, '生成的示例数据')}>
+                                      <ClipboardCopy className="mr-2 h-4 w-4" /> 复制
+                                  </Button>
+                                  <Button variant="ghost" size="sm" onClick={handleInsertData}>
+                                      <ClipboardPaste className="mr-2 h-4 w-4" /> 插入示例数据
+                                  </Button>
+                                </div>
                             </CardContent>
                         </Card>
                     )}
