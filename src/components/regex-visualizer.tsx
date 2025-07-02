@@ -15,11 +15,12 @@ type AstNode =
   | { type: 'quantifier', kind: string, greedy: boolean, content: AstNode }
   | { type: 'group', capturing: boolean, index?: number, content: AstNode, label?: string }
   | { type: 'char-class', raw: string, description: string, label: string, content?: string }
+  | { type: 'control-char', raw: string, description: string, label: string }
   | { type: 'anchor', raw: string, description: string, label: string }
   | { type: 'literal', value: string, raw: string, description: string, label: string }
   | { type: 'backreference', raw: string, groupIndex: number, label: string, description: string };
 
-const tokenInfo: Record<string, { type: 'char-class' | 'anchor', description: string, label: string }> = {
+const tokenInfo: Record<string, { type: 'char-class' | 'anchor' | 'control-char', description: string, label: string }> = {
     '\\d': { type: 'char-class', description: '匹配任何数字 (0-9)。', label: '数字' },
     '\\D': { type: 'char-class', description: '匹配任何非数字字符。', label: '非数字' },
     '\\w': { type: 'char-class', description: '匹配任何单词字符（字母数字和下划线）。', label: '单词字符' },
@@ -31,6 +32,11 @@ const tokenInfo: Record<string, { type: 'char-class' | 'anchor', description: st
     '$': { type: 'anchor', description: '匹配字符串的结尾。', label: '结尾' },
     '\\b': { type: 'anchor', description: '匹配单词边界。', label: '词边界' },
     '\\B': { type: 'anchor', description: '匹配非单词边界。', label: '非词边界' },
+    '\\n': { type: 'control-char', description: '匹配换行符。', label: '换行' },
+    '\\r': { type: 'control-char', description: '匹配回车符。', label: '回车' },
+    '\\t': { type: 'control-char', description: '匹配制表符。', label: '制表符' },
+    '\\f': { type: 'control-char', description: '匹配换页符。', label: '换页' },
+    '\\v': { type: 'control-char', description: '匹配垂直制表符。', label: '垂直制表符' },
 };
 
 
@@ -125,6 +131,14 @@ function parse(regex: string): { ast: AstNode | null, error: string | null } {
         }
 
         if (token && token.startsWith('[') && token.endsWith(']')) {
+            // HACK: Handle common inverted classes explicitly for better visualization
+            if (token === '[^\\n]') {
+                return { type: 'char-class', raw: token, description: '匹配除换行符以外的任何字符。', label: '非换行符' };
+            }
+            if (token === '[^\\r\\n]') {
+                return { type: 'char-class', raw: token, description: '匹配除换行或回车以外的任何字符。', label: '非换行/回车' };
+            }
+
             const inverted = token.startsWith('[^');
             const content = token.substring(inverted ? 2 : 1, token.length - 1);
             let description = '';
@@ -192,6 +206,7 @@ const NodeComponent = ({ node }: { node: AstNode }) => {
     case 'quantifier': return <Quantifier node={node} />;
     case 'group': return <Group node={node} />;
     case 'char-class': 
+    case 'control-char':
     case 'anchor':
     case 'literal':
     case 'backreference':
@@ -306,10 +321,11 @@ const NodeBox = ({ label, content, description, className }: { label: string; co
     </div>
 );
 
-const Terminal = ({ node }: { node: AstNode & { type: 'literal' | 'char-class' | 'anchor' | 'backreference' } }) => {
+const Terminal = ({ node }: { node: AstNode & { type: 'literal' | 'char-class' | 'anchor' | 'backreference' | 'control-char' } }) => {
     let className = '';
     if (node.type === 'char-class') className = 'border-emerald-400';
     if (node.type === 'anchor') className = 'border-violet-400';
+    if (node.type === 'control-char') className = 'border-fuchsia-400';
     if (node.type === 'literal') className = 'border-sky-400';
     if (node.type === 'backreference') className = 'border-orange-400';
 
