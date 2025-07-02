@@ -391,26 +391,37 @@ export default function RegexPlaygroundPage() {
                         matches.map((match, index) => (
                           <Card key={index} className="bg-muted/50">
                             <CardHeader className="pb-2">
-                                <CardTitle className="text-base flex justify-between items-center font-bold">
+                                <CardTitle className="text-base font-bold">
                                   <span>匹配 {index + 1}</span>
-                                   <Button variant="ghost" size="sm" onClick={() => handleCopy(match[0], `匹配项 ${index+1}`)}>
-                                     <ClipboardCopy className="mr-2 h-4 w-4" /> 复制
-                                   </Button>
                                 </CardTitle>
-                                <pre className="font-code text-sm p-2 bg-background rounded-md mt-1">{match[0]}</pre>
                             </CardHeader>
-                            <CardContent>
-                              <p className="text-sm font-medium mb-2">分组：</p>
-                              {match.length > 1 ? ([...match].slice(1).map((group, groupIndex) => (
-                                <div key={groupIndex} className="flex items-center justify-between text-sm mb-1 font-code gap-2 bg-background p-1.5 rounded-md border">
-                                    <span className="text-muted-foreground">${groupIndex + 1}:</span>
-                                    <pre className="flex-grow overflow-x-auto">{group ?? 'undefined'}</pre>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => handleCopy(group ?? '', `分组 ${groupIndex + 1}`)}>
-                                      <ClipboardCopy className="h-3 w-3" />
-                                      <span className="sr-only">复制分组 {groupIndex + 1}</span>
-                                    </Button>
+                            <CardContent className="space-y-4 pt-2">
+                              <div className="flex items-center justify-between text-sm font-code gap-2 bg-background p-1.5 rounded-md border">
+                                  <span className="font-semibold text-muted-foreground">完整匹配:</span>
+                                  <pre className="flex-grow overflow-x-auto mr-2">{match[0]}</pre>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => handleCopy(match[0], `完整匹配 ${index + 1}`)}>
+                                    <ClipboardCopy className="h-4 w-4" />
+                                    <span className="sr-only">复制完整匹配</span>
+                                  </Button>
+                              </div>
+                              
+                              {match.length > 1 ? (
+                                <div>
+                                  <p className="text-sm font-medium mb-2">捕获分组：</p>
+                                  <div className="space-y-1">
+                                    {[...match].slice(1).map((group, groupIndex) => (
+                                      <div key={groupIndex} className="flex items-center justify-between text-sm font-code gap-2 bg-background p-1.5 rounded-md border">
+                                          <span className="text-muted-foreground">${groupIndex + 1}:</span>
+                                          <pre className="flex-grow overflow-x-auto mr-2">{group ?? 'undefined'}</pre>
+                                          <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => handleCopy(group ?? '', `分组 ${groupIndex + 1}`)}>
+                                            <ClipboardCopy className="h-3 w-3" />
+                                            <span className="sr-only">复制分组 {groupIndex + 1}</span>
+                                          </Button>
+                                      </div>
+                                    ))}
+                                  </div>
                                 </div>
-                              ))) : (<p className="text-sm text-muted-foreground">未找到捕获分组。</p>)}
+                              ) : (<p className="text-sm text-muted-foreground">未找到捕获分组。</p>)}
                             </CardContent>
                           </Card>
                         ))
