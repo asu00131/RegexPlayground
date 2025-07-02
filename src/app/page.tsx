@@ -156,6 +156,15 @@ export default function RegexPlaygroundPage() {
     handleCopy(allGroupsText, `匹配 ${matchIndex + 1} 的所有分组`);
   }, [handleCopy]);
 
+  const handleCopyAllOfOneGroup = useCallback((groupIndex: number) => {
+    if (matches.length === 0) return;
+    const groupNText = matches
+        .map(match => match[groupIndex + 1])
+        .filter(g => g !== undefined)
+        .join('\n');
+    handleCopy(groupNText, `所有匹配中的分组 ${groupIndex + 1} 的内容`);
+  }, [matches, handleCopy]);
+
   const handleGenerateAndInsertData = useCallback(async () => {
     if (!regex || regexError) {
       toast({
@@ -431,10 +440,24 @@ export default function RegexPlaygroundPage() {
                                       <div key={groupIndex} className="flex items-center justify-between text-sm font-code gap-2 bg-background p-1.5 rounded-md border">
                                           <span className="text-muted-foreground">${groupIndex + 1}:</span>
                                           <pre className="flex-grow overflow-x-auto mr-2">{group ?? 'undefined'}</pre>
-                                          <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => handleCopy(group ?? '', `分组 ${groupIndex + 1}`)}>
-                                            <ClipboardCopy className="h-3 w-3" />
-                                            <span className="sr-only">复制分组 {groupIndex + 1}</span>
-                                          </Button>
+                                          <div className="flex items-center gap-1 shrink-0">
+                                            {index === 0 && (
+                                              <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="h-6 px-1.5 text-xs"
+                                                onClick={() => handleCopyAllOfOneGroup(groupIndex)}
+                                                title={`复制所有匹配中的分组 ${groupIndex + 1}`}
+                                              >
+                                                <ClipboardCopy className="mr-1 h-3 w-3" />
+                                                复制所有
+                                              </Button>
+                                            )}
+                                            <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => handleCopy(group ?? '', `分组 ${groupIndex + 1}`)}>
+                                              <ClipboardCopy className="h-3 w-3" />
+                                              <span className="sr-only">复制分组 {groupIndex + 1}</span>
+                                            </Button>
+                                          </div>
                                       </div>
                                     ))}
                                   </div>
