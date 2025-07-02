@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -13,23 +14,22 @@ type AstNode =
   | { type: 'choice', options: AstNode[] }
   | { type: 'quantifier', kind: string, greedy: boolean, content: AstNode }
   | { type: 'group', capturing: boolean, index?: number, content: AstNode, label?: string }
-  | { type: 'char-class', raw: string, description: string }
-  | { type: 'anchor', raw: string, description: string }
-  | { type: 'literal', value: string };
+  | { type: 'char-class', raw: string, description: string, label: string }
+  | { type: 'anchor', raw: string, description: string, label: string }
+  | { type: 'literal', value: string, raw: string, description: string, label: string };
 
-  
-const tokenDescriptions: Record<string, { type: 'char-class' | 'anchor', description: string }> = {
-    '\\d': { type: 'char-class', description: '匹配任何数字 (0-9)。' },
-    '\\w': { type: 'char-class', description: '匹配任何单词字符（字母数字和下划线）。' },
-    '\\s': { type: 'char-class', description: '匹配任何空白字符。' },
-    '\\D': { type: 'char-class', description: '匹配任何非数字字符。' },
-    '\\W': { type: 'char-class', description: '匹配任何非单词字符。' },
-    '\\S': { type: 'char-class', description: '匹配任何非空白字符。' },
-    '.': { type: 'char-class', description: '匹配除换行符以外的任何字符。' },
-    '^': { type: 'anchor', description: '匹配字符串的开头。' },
-    '$': { type: 'anchor', description: '匹配字符串的结尾。' },
-    '\\b': { type: 'anchor', description: '匹配单词边界。' },
-    '\\B': { type: 'anchor', description: '匹配非单词边界。' },
+const tokenInfo: Record<string, { type: 'char-class' | 'anchor', description: string, label: string }> = {
+    '\\d': { type: 'char-class', description: '匹配任何数字 (0-9)。', label: '数字' },
+    '\\D': { type: 'char-class', description: '匹配任何非数字字符。', label: '非数字' },
+    '\\w': { type: 'char-class', description: '匹配任何单词字符（字母数字和下划线）。', label: '单词字符' },
+    '\\W': { type: 'char-class', description: '匹配任何非单词字符。', label: '非单词字符' },
+    '\\s': { type: 'char-class', description: '匹配任何空白字符。', label: '空白' },
+    '\\S': { type: 'char-class', description: '匹配任何非空白字符。', label: '非空白' },
+    '.': { type: 'char-class', description: '匹配除换行符以外的任何字符。', label: '任意字符' },
+    '^': { type: 'anchor', description: '匹配字符串的开头。', label: '开头' },
+    '$': { type: 'anchor', description: '匹配字符串的结尾。', label: '结尾' },
+    '\\b': { type: 'anchor', description: '匹配单词边界。', label: '词边界' },
+    '\\B': { type: 'anchor', description: '匹配非单词边界。', label: '非词边界' },
 };
 
 
@@ -41,7 +41,7 @@ function parse(regex: string): { ast: AstNode | null, error: string | null } {
         return { ast: null, error: e.message };
     }
 
-    const tokens = regex.match(/\\.|[+*?](?:\?)?|\{\d+,?\d*\}|\(\?[:=!]|\(|\)|\||\^|\$|\[.*?\]|[^\\()\[\]+*?{}^$|]+/g) || [];
+    const tokens = regex.match(/\\.|[+*?](?:\?)?|\{\d+,?\d*\}|\[\^?.*?\]|\(\?[:=!]|\(|\)|\||\^|\$|[^\\()\[\]+*?{}^$|]+/g) || [];
     let position = 0;
     let groupIndex = 1;
 
@@ -77,7 +77,7 @@ function parse(regex: string): { ast: AstNode | null, error: string | null } {
             
             if (token === '(') {
               capturing = true;
-              label = `分组 #${groupIndex}`;
+              label = `捕获分组 #${groupIndex}`;
             } else if (token === '(?:') {
               label = '非捕获分组';
             } else if (token === '(?=') {
@@ -108,16 +108,37 @@ function parse(regex: string): { ast: AstNode | null, error: string | null } {
             return { type: 'group', capturing, index: capturing ? groupIndex++ : undefined, content, label };
         }
 
-        const description = tokenDescriptions[token];
-        if (description) {
-            return { type: description.type, raw: token, description: description.description };
+        const info = tokenInfo[token];
+        if (info) {
+            return { type: info.type, raw: token, description: info.description, label: info.label };
         }
 
         if (token && token.startsWith('[') && token.endsWith(']')) {
-            return { type: 'char-class', raw: token, description: '字符集。匹配其中任意一个字符。' };
+            const inverted = token.startsWith('[^');
+            const content = token.substring(inverted ? 2 : 1, token.length - 1).replace(/\\(.)/g, '$1');
+            let description = '';
+            let label = '';
+
+            const commonRanges: Record<string, {label: string, desc: string}> = {
+                'a-z': {label: '小写字母', desc: '匹配任意小写字母 a 到 z。'},
+                'A-Z': {label: '大写字母', desc: '匹配任意大写字母 A 到 Z。'},
+                '0-9': {label: '数字', desc: '匹配任意数字 0 到 9。'},
+                'a-zA-Z0-9_': {label: '单词字符', desc: '匹配任何单词字符（字母数字和下划线）。'}
+            }
+            if(commonRanges[content]) {
+                label = commonRanges[content].label;
+                description = commonRanges[content].desc;
+            } else {
+                 label = content.length > 8 ? '字符集' : content;
+                 description = inverted 
+                     ? `匹配除 "${content}" 以外的任意字符。` 
+                     : `匹配 "${content}" 中的任意一个字符。`;
+            }
+
+            return { type: 'char-class', raw: token, description, label: (inverted ? '非: ' : '') + label };
         }
 
-        return { type: 'literal', value: token };
+        return { type: 'literal', value: token, raw: token, label: token, description: `匹配字面量字符: "${token}"` };
     }
     
     try {
@@ -147,15 +168,14 @@ const NodeComponent = ({ node }: { node: AstNode }) => {
     case 'quantifier': return <Quantifier node={node} />;
     case 'group': return <Group node={node} />;
     case 'char-class': 
-        const text = node.raw === '\\d' ? '数字' : node.raw;
-        return <Terminal text={text} description={node.description} className="bg-emerald-200 text-emerald-900 border-emerald-400" />;
-    case 'anchor': return <Terminal text={node.raw} description={node.description} className="bg-violet-200 text-violet-900 border-violet-400" />;
-    case 'literal': return <Terminal text={node.value} description={`匹配字面量: "${node.value}"`} className="bg-sky-200 text-sky-900 border-sky-400" />;
+    case 'anchor':
+    case 'literal':
+      return <Terminal node={node} />;
     default: return null;
   }
 };
 
-const Path = ({className}: {className?: string}) => <div className={cn("w-8 h-1 bg-red-500", className)} />;
+const Path = ({className}: {className?: string}) => <div className={cn("w-6 h-0.5 bg-destructive", className)} />;
 
 const Sequence = ({ parts }: { parts: AstNode[] }) => (
   <div className="flex items-center">
@@ -169,18 +189,18 @@ const Sequence = ({ parts }: { parts: AstNode[] }) => (
 );
 
 const Choice = ({ options }: { options: AstNode[] }) => (
-  <div className="inline-flex items-center">
-    <div className="flex flex-col gap-2">
-      {options.map((option, index) => (
-         <div key={index} className="flex items-center">
-            <div className="w-4 h-1 bg-red-500" />
-            <div className="w-4 h-full border-red-500 border-y-2 first:border-t-0 last:border-b-0 border-r-2 rounded-r-md" />
-            <div className="mx-2"><NodeComponent node={option} /></div>
-            <div className="w-4 h-full border-red-500 border-y-2 first:border-t-0 last:border-b-0 border-l-2 rounded-l-md" />
-            <div className="w-4 h-1 bg-red-500" />
+  <div className="inline-flex flex-col items-stretch border-2 border-dashed border-gray-400 rounded-lg p-3 bg-muted/30">
+    <p className="text-xs text-muted-foreground text-center mb-2 font-medium">任选其一</p>
+    {options.map((option, index) => (
+      <React.Fragment key={index}>
+        <div className="flex justify-center">
+          <NodeComponent node={option} />
         </div>
-      ))}
-    </div>
+        {index < options.length - 1 && (
+          <div className="text-center my-1.5 text-xs text-muted-foreground font-bold">或</div>
+        )}
+      </React.Fragment>
+    ))}
   </div>
 );
 
@@ -198,31 +218,27 @@ const Quantifier = ({ node }: { node: AstNode & { type: 'quantifier' } }) => {
   }
   if (!node.greedy) text += ' (非贪婪)';
   
+  const hasBypass = node.kind === '?' || node.kind === '*';
+  const hasLoop = node.kind === '+' || node.kind === '*';
+
   return (
-    <div className="flex flex-col items-center">
-        {/* Bypass path for ? and * */}
-        {(node.kind === '?' || node.kind === '*') && (
-            <div className='flex items-center w-full'>
-                <div className='w-4 h-4 border-b-2 border-r-2 border-red-500 rounded-br-md' />
-                <div className='flex-grow h-0 border-b-2 border-red-500' />
-                <div className='w-4 h-4 border-b-2 border-l-2 border-red-500 rounded-bl-md' />
-            </div>
+    <div className="inline-flex flex-col items-center mx-2">
+      <div className="relative pt-6 pb-6">
+        <NodeComponent node={node.content} />
+        {hasBypass && (
+          <div className="absolute top-0 left-0 right-0 h-4" aria-hidden="true">
+            <div className="w-full h-full border-t-2 border-x-2 border-destructive rounded-t-md" />
+          </div>
         )}
-        
-        {/* Main content path */}
-        <div className="flex items-center">
-            <NodeComponent node={node.content} />
-        </div>
-        
-        {/* Loop path for + and * */}
-        {(node.kind === '+' || node.kind === '*') && (
-            <div className='flex items-center w-full'>
-                <div className='w-4 h-4 border-t-2 border-r-2 border-red-500 rounded-tr-md' />
-                <div className='flex-grow h-0 border-b-2 border-red-500 border-dashed' />
-                <div className='w-4 h-4 border-t-2 border-l-2 border-red-500 rounded-tl-md' />
+        {hasLoop && (
+          <div className="absolute bottom-0 left-0 right-0 h-4" aria-hidden="true">
+            <div className="w-full h-full border-b-2 border-x-2 border-destructive border-dashed rounded-b-md flex items-center">
+              <div className="w-0 h-0 border-t-[4px] border-t-transparent border-r-[5px] border-r-destructive border-b-[4px] border-b-transparent ml-2"></div>
             </div>
+          </div>
         )}
-        <p className='text-xs text-muted-foreground mt-1'>{text}</p>
+      </div>
+      <p className="text-xs text-muted-foreground font-medium">{text}</p>
     </div>
   );
 };
@@ -231,23 +247,41 @@ const Quantifier = ({ node }: { node: AstNode & { type: 'quantifier' } }) => {
 const Group = ({ node }: { node: AstNode & { type: 'group' } }) => {
   const text = node.label || (node.capturing ? `分组 #${node.index}` : '非捕获分组');
   return (
-    <div className="p-3 border-2 border-dashed border-gray-400 rounded-lg bg-gray-50/50 relative mx-2">
-      <div className="absolute -top-3 left-2 text-xs text-center text-muted-foreground bg-muted/50 px-1">{text}</div>
+    <div className="p-4 border-2 border-dashed border-gray-400 rounded-lg bg-muted/30 relative mx-2">
+      <div className="absolute -top-3 left-2 text-xs text-center text-muted-foreground bg-background px-1">{text}</div>
       <NodeComponent node={node.content} />
     </div>
   );
 };
 
-const Terminal = ({ text, description, className, variant = 'box' }: { text: string; description: string; className?: string; variant?: 'box' | 'start' | 'end' }) => (
-  <div title={description} className={cn(
-      "px-4 py-2 border-2 rounded-lg font-code text-center min-w-[40px] shadow-sm", 
-      variant === 'start' && 'h-10 w-10 flex items-center justify-center rounded-full bg-green-500 text-white border-green-700',
-      variant === 'end' && 'h-10 w-10 flex items-center justify-center rounded-full bg-slate-700 text-white border-slate-900',
-      className
-    )}>
-    {text}
-  </div>
+const NodeBox = ({ label, raw, description, className }: { label: string; raw?: string; description: string; className?: string }) => (
+    <div title={description} className={cn("px-3 py-1.5 border-2 rounded-md text-center shadow-sm min-w-[50px] bg-card", className)}>
+        <div className="font-semibold text-card-foreground">{label}</div>
+        {raw && raw !== label && <div className="text-xs text-muted-foreground font-code mt-0.5">{raw}</div>}
+    </div>
 );
+
+const Terminal = ({ node }: { node: AstNode & { type: 'literal' | 'char-class' | 'anchor' } }) => {
+    let className = '';
+    if (node.type === 'char-class') className = 'border-emerald-400';
+    if (node.type === 'anchor') className = 'border-violet-400';
+    if (node.type === 'literal') className = 'border-sky-400';
+
+    return <NodeBox label={node.label} raw={node.raw ?? node.value} description={node.description} className={className} />;
+};
+
+const StartNode = () => (
+    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-green-500 text-white font-bold border-2 border-green-700 shadow-md">
+        开始
+    </div>
+);
+
+const EndNode = () => (
+    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-slate-700 text-white font-bold border-2 border-slate-900 shadow-md">
+        结束
+    </div>
+);
+
 
 const RegexVisualizer = ({ regex }: { regex: string }) => {
   const { ast, error } = useMemo(() => parse(regex), [regex]);
@@ -256,7 +290,7 @@ const RegexVisualizer = ({ regex }: { regex: string }) => {
   if (error) {
     return (
       <div className="flex h-full min-h-32 items-center justify-center rounded-lg bg-muted/50 p-4">
-        <p className="text-center text-muted-foreground">{error}</p>
+        <p className="text-center text-destructive">{error}</p>
       </div>
     );
   }
@@ -274,31 +308,34 @@ const RegexVisualizer = ({ regex }: { regex: string }) => {
       <div className="overflow-x-auto p-8 bg-muted/50 rounded-lg">
         <div 
           className="inline-block" 
-          style={{ transform: `scale(${zoom/100})`, transformOrigin: 'center' }}
+          style={{ transform: `scale(${zoom/100})`, transformOrigin: 'center left' }}
         >
-            <div className="inline-flex items-center">
-              <Terminal text="" description="正则表达式的开始" variant="start" />
+            <div className="inline-flex items-center p-4">
+              <StartNode />
               <Path />
               <NodeComponent node={ast} />
               <Path />
-              <Terminal text="" description="正则表达式的结束" variant="end" />
+              <EndNode />
             </div>
         </div>
       </div>
        <div className="flex items-center justify-center gap-4 mt-4 p-2 rounded-lg bg-muted/50">
-          <Label htmlFor="zoom-slider" className="text-sm font-medium">放大</Label>
+          <Label htmlFor="zoom-slider" className="text-sm font-medium">缩放</Label>
           <Slider
             id="zoom-slider"
-            min={50}
+            min={25}
             max={150}
-            step={10}
+            step={5}
             value={[zoom]}
             onValueChange={(value) => setZoom(value[0])}
             className="w-48"
           />
+          <span className="text-sm text-muted-foreground w-12 text-center">{zoom}%</span>
       </div>
     </div>
   );
 };
 
 export default RegexVisualizer;
+
+    
