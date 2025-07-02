@@ -214,18 +214,29 @@ const Sequence = ({ parts }: { parts: AstNode[] }) => (
 );
 
 const Choice = ({ options }: { options: AstNode[] }) => (
-  <div className="inline-flex flex-col items-stretch border-2 border-dashed border-gray-400 rounded-lg p-3 bg-muted/30">
-    <p className="text-xs text-muted-foreground text-center mb-2 font-medium">任选其一</p>
-    {options.map((option, index) => (
-      <React.Fragment key={index}>
-        <div className="flex justify-center">
-          <NodeComponent node={option} />
-        </div>
-        {index < options.length - 1 && (
-          <div className="text-center my-1.5 text-xs text-muted-foreground font-bold">或</div>
-        )}
-      </React.Fragment>
-    ))}
+  <div className="inline-flex flex-col items-center">
+    {/* Entry branch point */}
+    <div className="w-0.5 h-2 bg-destructive" />
+
+    <div className="flex flex-col border-x-2 border-destructive rounded-lg">
+      {options.map((option, index) => (
+        <React.Fragment key={index}>
+          <div className="flex items-center px-4 py-2">
+            <Path />
+            <NodeComponent node={option} />
+            <Path />
+          </div>
+          {index < options.length - 1 && (
+             <div className="h-0.5 w-full bg-destructive relative">
+                <span className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-1 text-xs text-muted-foreground">或</span>
+             </div>
+          )}
+        </React.Fragment>
+      ))}
+    </div>
+    
+    {/* Exit branch point */}
+    <div className="w-0.5 h-2 bg-destructive" />
   </div>
 );
 
@@ -374,5 +385,3 @@ const RegexVisualizer = ({ regex }: { regex: string }) => {
 };
 
 export default RegexVisualizer;
-
-    
