@@ -34,7 +34,10 @@ const generateRegexDataPrompt = ai.definePrompt({
   name: 'generateRegexDataPrompt',
   input: {schema: GenerateRegexDataInputSchema},
   output: {schema: GenerateRegexDataOutputSchema},
-  prompt: `You are a regular expression expert. Please generate a string of sample data that conforms to the following regular expression:\n\n{{regex}}\n\nEnsure that the generated data is valid according to the regex. Do not provide any explanations, just the generated sample data.`,
+  prompt: `You are a regular expression expert. Please generate a string of sample data that conforms to the following regular expression:\n\n{{regex}}\n\nEnsure that the generated data is valid according to the regex. Do not provide any explanations, just the generated sample data. For each request, provide a different, unique, and random result.`,
+  config: {
+    temperature: 1.0,
+  },
 });
 
 const generateRegexDataFlow = ai.defineFlow(
