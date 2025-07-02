@@ -166,27 +166,35 @@ export default function RegexPlaygroundPage() {
   }, [matches, handleCopy]);
 
   const handleGenerateAndInsertData = useCallback(async () => {
+    if (!regex) {
+      toast({
+        variant: 'destructive',
+        title: '请输入正则表达式',
+        description: 'AI需要一个正则表达式来生成测试数据。',
+      });
+      return;
+    }
     setIsInsertingSample(true);
     try {
-      const result = await generateRegexData({});
+      const result = await generateRegexData({ regex });
       setTestString((prevTestString) =>
         prevTestString ? `${result.sampleData}\n${prevTestString}` : result.sampleData
       );
       toast({
         title: '数据已插入',
-        description: '生成的示例数据已添加到测试字符串的开头。',
+        description: 'AI生成的测试数据已添加到测试字符串的开头。',
       });
     } catch (error) {
       console.error('生成数据时出错:', error);
       toast({
         variant: 'destructive',
         title: '生成失败',
-        description: '无法生成示例数据。',
+        description: '无法生成示例数据。请检查您的网络连接或稍后再试。',
       });
     } finally {
       setIsInsertingSample(false);
     }
-  }, [toast]);
+  }, [regex, toast]);
 
   const highlightedTestString = useMemo(() => {
     if (regexError || !testString || matches.length === 0) {
