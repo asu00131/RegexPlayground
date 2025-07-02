@@ -450,7 +450,7 @@ export default function RegexPlaygroundPage() {
                                                 title={`复制所有匹配中的分组 ${groupIndex + 1}`}
                                               >
                                                 <ClipboardCopy className="mr-1 h-3 w-3" />
-                                                复制所有
+                                                复制该组所有
                                               </Button>
                                             )}
                                             <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => handleCopy(group, `分组 ${groupIndex + 1}`)}>
