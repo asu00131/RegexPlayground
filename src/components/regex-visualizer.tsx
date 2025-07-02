@@ -115,7 +115,7 @@ function parse(regex: string): { ast: AstNode | null, error: string | null } {
 
         if (token && token.startsWith('[') && token.endsWith(']')) {
             const inverted = token.startsWith('[^');
-            const content = token.substring(inverted ? 2 : 1, token.length - 1).replace(/\\(.)/g, '$1');
+            const content = token.substring(inverted ? 2 : 1, token.length - 1);
             let description = '';
             let label = '';
 
@@ -123,7 +123,15 @@ function parse(regex: string): { ast: AstNode | null, error: string | null } {
                 'a-z': {label: '小写字母', desc: '匹配任意小写字母 a 到 z。'},
                 'A-Z': {label: '大写字母', desc: '匹配任意大写字母 A 到 Z。'},
                 '0-9': {label: '数字', desc: '匹配任意数字 0 到 9。'},
-                'a-zA-Z0-9_': {label: '单词字符', desc: '匹配任何单词字符（字母数字和下划线）。'}
+                'a-zA-Z0-9_': {label: '单词字符', desc: '匹配任何单词字符（字母数字和下划线）。'},
+                '\\w\\W': {label: '任意字符', desc: '匹配任意字符，包括换行符。'},
+                '\\w': {label: '单词字符', desc: '匹配任何单词字符（字母数字和下划线）。'},
+                '\\W': {label: '非单词字符', desc: '匹配任何非单词字符。'},
+                '\\d': {label: '数字', desc: '匹配任何数字 (0-9)。'},
+                '\\D': {label: '非数字', desc: '匹配任何非数字字符。'},
+                '\\s': {label: '空白', desc: '匹配任何空白字符。'},
+                '\\S': {label: '非空白', desc: '匹配任何非空白字符。'},
+                '\\W_': {label: '特殊字符', desc: '匹配一个非单词字符或下划线 (等同于非字母数字)。'},
             }
             if(commonRanges[content]) {
                 label = commonRanges[content].label;
@@ -212,7 +220,16 @@ const Quantifier = ({ node }: { node: AstNode & { type: 'quantifier' } }) => {
       case '?': text = '0 或 1 次'; break;
       default:
         if (node.kind.startsWith('{')) {
-            text = `重复 ${node.kind.slice(1, -1)} 次`;
+            const range = node.kind.slice(1, -1);
+            const [min, max] = range.split(',');
+
+            if (max === undefined) { // {n}
+                text = `重复 ${min} 次`;
+            } else if (max === '') { // {n,}
+                text = `重复 ${min} 次或更多`;
+            } else { // {n,m}
+                text = `重复 ${min} 到 ${max} 次`;
+            }
         }
         break;
   }
@@ -337,5 +354,3 @@ const RegexVisualizer = ({ regex }: { regex: string }) => {
 };
 
 export default RegexVisualizer;
-
-    
