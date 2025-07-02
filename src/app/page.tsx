@@ -106,7 +106,7 @@ export default function RegexPlaygroundPage() {
   const [generatedData, setGeneratedData] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   
-  const scrollSyncRef = useRef<HTMLPreElement>(null);
+  const scrollSyncRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -172,40 +172,55 @@ export default function RegexPlaygroundPage() {
 
   const highlightedTestString = useMemo(() => {
     if (regexError || !testString || matches.length === 0) {
-      return <>{testString + '\n'}</>;
-    }
-  
-    const parts = [];
-    let lastIndex = 0;
-  
-    matches.forEach((match, i) => {
-      const startIndex = match.index!;
-      const matchText = match[0];
-  
-      if (startIndex > lastIndex) {
-        parts.push(
-          <Fragment key={`pre-${i}`}>{testString.substring(lastIndex, startIndex)}</Fragment>
-        );
-      }
-      
-      parts.push(
-        <mark key={`match-${i}`} className="bg-accent/40 text-accent-foreground rounded-sm">
-          {matchText}
-        </mark>
-      );
-      
-      lastIndex = startIndex + matchText.length;
-    });
-  
-    if (lastIndex < testString.length) {
-      parts.push(
-        <Fragment key="post-last">{testString.substring(lastIndex)}</Fragment>
-      );
+      const lines = (testString || '').split('\n');
+      return lines.map((line, i) => <div key={i}>{line || '\u00A0'}</div>);
     }
 
-    parts.push(<Fragment key="trailing-newline">{'\n'}</Fragment>)
-  
-    return <>{parts}</>;
+    const segments: { type: 'text' | 'mark'; content: string }[] = [];
+    let lastIndex = 0;
+    matches.forEach((match) => {
+      const startIndex = match.index!;
+      const matchText = match[0];
+      if (startIndex > lastIndex) {
+        segments.push({ type: 'text', content: testString.substring(lastIndex, startIndex) });
+      }
+      segments.push({ type: 'mark', content: matchText });
+      lastIndex = startIndex + matchText.length;
+    });
+    if (lastIndex < testString.length) {
+      segments.push({ type: 'text', content: testString.substring(lastIndex) });
+    }
+
+    const lines: React.ReactNode[][] = [];
+    let currentLine: React.ReactNode[] = [];
+    let keyCounter = 0;
+
+    for (const segment of segments) {
+      let subSegments = segment.content.split('\n');
+      for (let i = 0; i < subSegments.length; i++) {
+        const part = subSegments[i];
+        if (part) {
+          if (segment.type === 'text') {
+            currentLine.push(<Fragment key={keyCounter++}>{part}</Fragment>);
+          } else {
+            currentLine.push(<mark key={keyCounter++} className="bg-accent/40 text-accent-foreground rounded-sm">{part}</mark>);
+          }
+        }
+        if (i < subSegments.length - 1) {
+          lines.push(currentLine.length > 0 ? currentLine : [<Fragment key={keyCounter++}>{'\u00A0'}</Fragment>]);
+          currentLine = [];
+        }
+      }
+    }
+    lines.push(currentLine.length > 0 ? currentLine : [<Fragment key={keyCounter++}>{'\u00A0'}</Fragment>]);
+    
+    return (
+      <>
+        {lines.map((line, i) => (
+          <div key={i}>{line}</div>
+        ))}
+      </>
+    );
   }, [matches, testString, regexError]);
 
   return (
@@ -275,14 +290,14 @@ export default function RegexPlaygroundPage() {
                 <CardTitle className="font-bold">测试字符串</CardTitle>
               </CardHeader>
               <CardContent>
-                 <div className="relative h-48 border rounded-md">
-                    <pre
+                 <div className="relative h-48 border rounded-md font-code text-sm leading-6">
+                    <div
                       ref={scrollSyncRef}
                       aria-hidden="true"
-                      className="absolute inset-0 m-0 whitespace-pre-wrap overflow-auto pointer-events-none p-2 font-code text-sm leading-6"
+                      className="absolute inset-0 m-0 overflow-auto pointer-events-none p-2 break-words"
                     >
                       {highlightedTestString}
-                    </pre>
+                    </div>
                     <Textarea
                       ref={textareaRef}
                       value={testString}
@@ -294,7 +309,7 @@ export default function RegexPlaygroundPage() {
                         }
                       }}
                       placeholder="在此输入您的测试字符串"
-                      className="absolute inset-0 m-0 h-full w-full bg-transparent text-transparent caret-foreground resize-none p-2 focus-visible:ring-0 border-0 font-code text-sm leading-6 whitespace-pre-wrap"
+                      className="absolute inset-0 m-0 h-full w-full bg-transparent text-transparent caret-foreground resize-none p-2 focus-visible:ring-0 border-0 whitespace-pre-wrap"
                       spellCheck="false"
                       aria-label="测试字符串输入"
                     />
