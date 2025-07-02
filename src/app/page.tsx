@@ -96,7 +96,7 @@ export default function RegexPlaygroundPage() {
   const { toast } = useToast();
   const [regex, setRegex] = useState('(\\d+)aa(\\d+)bb');
   const [testString, setTestString] = useState('11aa22bb33cc\n743aa47bb\n62aa2bb\nThis line will not match.');
-  const [replacementString, setReplacementString] = useState('-$2-is-after-$1-');
+  const [replacementString, setReplacementString] = useState('【前】$2【-中间-】$1【后】');
   
   const [globalSearch, setGlobalSearch] = useState(true);
   const [ignoreCase, setIgnoreCase] = useState(false);
