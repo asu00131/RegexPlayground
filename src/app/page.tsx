@@ -38,6 +38,137 @@ import {
 } from 'lucide-react';
 import RegexVisualizer from '@/components/regex-visualizer';
 
+const commonPatterns = [
+  {
+    category: '数字类',
+    patterns: [
+      { name: '数字', regex: '[0-9]*' },
+      { name: 'n位的数字', regex: '\\d{n}' },
+      { name: '至少n位的数字', regex: '\\d{n,}' },
+      { name: 'm-n位的数字', regex: '\\d{m,n}' },
+      { name: '零和非零开头的数字', regex: '(0|[1-9][0-9]*)' },
+      { name: '非零开头的最多带两位小数的数字', regex: '([1-9][0-9]*)+(\\.[0-9]{1,2})?' },
+      { name: '带1-2位小数的正数或负数', regex: '(\\-)?\\d+(\\.\\d{1,2})?' },
+      { name: '正数、负数、和小数', regex: '(\\-|\\+)?\\d+(\\.\\d+)?' },
+      { name: '有两位小数的正实数', regex: '[0-9]+(\\.[0-9]{2})?' },
+      { name: '有1~3位小数的正实数', regex: '[0-9]+(\\.[0-9]{1,3})?' },
+      { name: '非零的正整数', regex: '[1-9]\\d*' },
+      { name: '非零的负整数', regex: '\\-[1-9]\\d*' },
+      { name: '非负整数', regex: '\\d+' },
+      { name: '非正整数', regex: '-[1-9]\\d*|0' },
+      { name: '非负浮点数', regex: '\\d+(\\.\\d+)?' },
+      { name: '非正浮点数', regex: '((-\\d+(\\.\\d+)?)|(0+(\\.0+)?))' },
+      { name: '正浮点数', regex: '[1-9]\\d*\\.\\d*|0\\.\\d*[1-9]\\d*' },
+      { name: '浮点数（小数）', regex: '(-?\\d+)(\\.\\d+)?' },
+      { name: '浮点数（严格）', regex: '^(-?[1-9]\\d*\\.\\d+|-?0\\.\\d*[1-9])$' },
+    ],
+  },
+  {
+    category: '字符串',
+    patterns: [
+        { name: '任意字符', regex: '[\\w\\W]+' },
+        { name: '英文和数字', regex: '[A-Za-z0-9]+' },
+        { name: '长度为3-20的所有字符', regex: '.{3,20}' },
+        { name: '由26个英文字母组成的字符串', regex: '[A-Za-z]+' },
+        { name: '由26个大写英文字母组成的字符串', regex: '[A-Z]+' },
+        { name: '由26个小写英文字母组成的字符串', regex: '[a-z]+' },
+        { name: '由数字和26个英文字母组成的字符串', regex: '[A-Za-z0-9]+' },
+        { name: '由数字、26个英文字母或者下划线组成的字符串', regex: '\\w+' },
+        { name: '中文、英文、数字包括下划线', regex: '[\\u4E00-\\u9FA5A-Za-z0-9_]+' },
+        { name: '中文、英文、数字但不包括下划线等符号', regex: '[\\u4E00-\\u9FA5A-Za-z0-9]+' },
+        { name: "可以输入含有^%&',;=?$\\等字符", regex: "['^%&,;=?$\\\\]+" },
+        { name: '禁止输入含有~的字符', regex: '[^~]+' },
+        { name: '中文字符（宽松）', regex: '[\\u4e00-\\u9fa5]' },
+        { name: '中文汉字（严谨）', regex: '^(?:[\\u3400-\\u4DB5\\u4E00-\\u9FEA\\uFA0E\\uFA0F\\uFA11\\uFA13\\uFA14\\uFA1F\\uFA21\\uFA23\\uFA24\\uFA27-\\uFA29]|[\\uD840-\\uD868\\uD86A-\\uD86C\\uD86F-\\uD872\\uD874-\\uD879][\\uDC00-\\uDFFF]|\\uD869[\\uDC00-\\uDED6\\uDF00-\\uDFFF]|\\uD86D[\\uDC00-\\uDF34\\uDF40-\\uDFFF]|\\uD86E[\\uDC00-\\uDC1D\\uDC20-\\uDFFF]|\\uD873[\\uDC00-\\uDEA1\\uDEB0-\\uDFFF]|\\uD87A[\\uDC00-\\uDFE0])+$' },
+        { name: '中文汉字 + 中文标点', regex: '[\\u4e00-\\u9fa5|\\u3002|\\uff1f|\\uff01|\\uff0c|\\u3001|\\uff1b|\\uff1a|\\u201c|\\u201d|\\u2018|\\u2019|\\uff08|\\uff09|\\u300a|\\u300b|\\u3008|\\u3009|\\u3010|\\u3011|\\u300e|\\u300f|\\u300c|\\u300d|\\ufe43|\\ufe44|\\u3014|\\u3015|\\u2026|\\u2014|\\uff5e|\\ufe4f|\\uffe5]' },
+        { name: '日文字符', regex: '[\\u3040-\\u309f]' },
+        { name: '双字节字符', regex: '[^\\x00-\\xff]' },
+        { name: '数字/货币金额', regex: '(?:^[-]?[1-9]\\d{0,2}(?:$|(?:,\\d{3})*(?:$|(\\.\\d{1,2}$))))|(?:(?:^[0](\\.\\d{1,2})?)|(?:^[-][0]\\.\\d{1,2}))$' },
+    ]
+  },
+  {
+    category: '时间',
+    patterns: [
+      { name: '日期格式（宽松）', regex: '\\d{4}-\\d{1,2}-\\d{1,2}' },
+      { name: '日期格式', regex: '^\\d{4}(-)(1[0-2]|0?\\d)\\1([0-2]\\d|\\d|30|31)$' },
+      { name: '日期格式（严谨，支持闰年）', regex: '^(([0-9]{3}[1-9]|[0-9]{2}[1-9][0-9]{1}|[0-9]{1}[1-9][0-9]{2}|[1-9][0-9]{3})-(((0[13578]|1[02])-(0[1-9]|[12][0-9]|3[01]))|((0[469]|11)-(0[1-9]|[12][0-9]|30))|(02-(0[1-9]|[1][0-9]|2[0-8]))))|((([0-9]{2})(0[48]|[2468][048]|[13579][26])|((0[48]|[2468][048]|[3579][26])00))-02-29)$' },
+      { name: '一年的12个月(01～09和1～12)', regex: '(0?[1-9]|1[0-2])' },
+      { name: '一个月的31天(01～09和1～31)', regex: '((0?[1-9])|((1|2)[0-9])|30|31)' },
+      { name: '简单的日期判断（YYYY/MM/DD）', regex: '\\d{4}(\\-|\\/|\\.)\\d{1,2}\\1\\d{1,2}' },
+      { name: '24小时制时间（HH:mm:ss）', regex: '^(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d$' },
+      { name: '12小时制时间（hh:mm:ss）', regex: '^(?:1[0-2]|0?[1-9]):[0-5]\\d:[0-5]\\d$' },
+      { name: '中国省份', regex: '^浙江|上海|北京|天津|重庆|黑龙江|吉林|辽宁|内蒙古|河北|新疆|甘肃|青海|陕西|宁夏|河南|山东|山西|安徽|湖北|湖南|江苏|四川|贵州|云南|广西|西藏|江西|广东|福建|台湾|海南|香港|澳门$' },
+    ]
+  },
+  {
+    category: '颜色',
+    patterns: [
+      { name: '16进制颜色', regex: '^#?([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$' },
+      { name: 'RGB颜色代码', regex: '[rR][gG][Bb][(]((2[0-4][0-9]|25[0-5]|[01]?[0-9][0-9]?),){2}(2[0-4]\\d|25[0-5]|[01]?\\d\\d?)[)]{1}' },
+    ]
+  },
+  {
+    category: '标签',
+    patterns: [
+      { name: 'XML文件', regex: '([a-zA-Z]+-?)+[a-zA-Z0-9]+\\.[x|X][m|M][l|L]' },
+      { name: 'HTML标记', regex: '<(\\S*?)[^>]*>.*?</\\1>|<.*? />' },
+      { name: 'HTML注释', regex: '^<!--[\\s\\S]*?-->$' },
+    ]
+  },
+  {
+    category: '网络',
+    patterns: [
+      { name: '域名', regex: '[a-zA-Z0-9][-a-zA-Z0-9]{0,62}(/.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})+/.?' },
+      { name: 'InternetURL', regex: '(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]' },
+      { name: '迅雷链接', regex: '^thunder://[a-zA-Z0-9]+=$' },
+      { name: '磁力链接(宽松匹配)', regex: '^magnet:\\?xt=urn:btih:[0-9a-fA-F]{40,}.*$' },
+      { name: 'IPv4（宽松）', regex: '\\d+\\.\\d+\\.\\d+\\.\\d+' },
+      { name: 'IPv4', regex: '((?:(?:25[0-5]|2[0-4]\\d|[01]?\\d?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|[01]?\\d?\\d))' },
+      { name: 'IPv6', regex: '^((([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){6}:[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){5}:([0-9A-Fa-f]{1,4}:)?[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){4}:([0-9A-Fa-f]{1,4}:){0,2}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){3}:([0-9A-Fa-f]{1,4}:){0,3}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){2}:([0-9A-Fa-f]{1,4}:){0,4}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){6}((\\b((25[0-5])|(1\\d{2})|(2[0-4]\\d)|(\\d{1,2}))\\b)\\.){3}(\\b((25[0-5])|(1\\d{2})|(2[0-4]\\d)|(\\d{1,2}))\\b))|(([0-9A-Fa-f]{1,4}:){0,5}:((\\b((25[0-5])|(1\\d{2})|(2[0-4]\\d)|(\\d{1,2}))\\b)\\.){3}(\\b((25[0-5])|(1\\d{2})|(2[0-4]\\d)|(\\d{1,2}))\\b))|(::([0-9A-Fa-f]{1,4}:){0,5}((\\b((25[0-5])|(1\\d{2})|(2[0-4]\\d)|(\\d{1,2}))\\b)\\.){3}(\\b((25[0-5])|(1\\d{2})|(2[0-4]\\d)|(\\d{1,2}))\\b))|([0-9A-Fa-f]{1,4}::([0-9A-Fa-f]{1,4}:){0,5}[0-9A-Fa-f]{1,4})|(::([0-9A-Fa-f]{1,4}:){0,6}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){1,7}:))$' },
+      { name: '子网掩码（不含0.0.0.0）', regex: '^(?:\\d{1,2}|1\\d\\d|2[0-4]\\d|25[0-5])(?:\\.(?:\\d{1,2}|1\\d\\d|2[0-4]\\d|25[0-5])){3}$' },
+      { name: 'MAC地址', regex: '^((([a-f0-9]{2}:){5})|(([a-f0-9]{2}-){5}))[a-f0-9]{2}$' },
+      { name: '视频链接地址', regex: '^https?://.*?(?:swf|avi|flv|mpg|rm|mov|wav|asf|3gp|mkv|rmvb|mp4)$' },
+      { name: '图片链接地址', regex: '^https?://.*?(?:gif|png|jpg|jpeg|webp|svg|psd|bmp|tif)$' },
+    ]
+  },
+  {
+    category: '其他',
+    patterns: [
+      { name: 'Email 地址', regex: '\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*' },
+      { name: '手机号码', regex: '^(?:(?:\\+|00)86)?(13[0-9]|14[01456789]|15[0-35-9]|17[0-35-8]|18[0-35-9]|19[0-35-9])\\d{8}$' },
+      { name: '手机机身码(IMEI)', regex: '^\\d{15,17}' },
+      { name: '固定电话号码（中国）', regex: '^(?:(?:\\d{3}-)?\\d{8}|^(?:\\d{4}-)?\\d{7,8})(?:-\\d+)?$' },
+      { name: '身份证号(宽松，15位、18位数字)', regex: '\\d{15}|\\d{18}' },
+      { name: '1代身份证号（15位）', regex: '^[1-9]\\d{7}(?:0\\d|10|11|12)(?:0[1-9]|[1-2][\\d]|30|31)\\d{3}$' },
+      { name: '2代身份证号（18位）', regex: '^[1-9]\\d{5}(?:18|19|20)\\d{2}(?:0[1-9]|10|11|12)(?:0[1-9]|[1-2]\\d|30|31)\\d{3}[\\dXx]$' },
+      { name: '中国身份证号（严谨，支持1/2代）', regex: '^\\d{6}((((((19|20)\\d{2})(0[13-9]|1[012])(0[1-9]|[12]\\d|30))|(((19|20)\\d{2})(0[13578]|1[02])31)|((19|20)\\d{2})02(0[1-9]|1\\d|2[0-8])|((((19|20)([13579][26]|[2468][048]|0[48]))|(2000))0229))\\d{3})|((((\\d{2})(0[13-9]|1[012])(0[1-9]|[12]\\d|30))|((\\d{2})(0[13578]|1[02])31)|((\\d{2})02(0[1-9]|1\\d|2[0-8]))|(([13579][26]|[2468][048]|0[048])0229))\\d{2}))(\\d|X|x)$' },
+      { name: '护照ID（包含香港、澳门）', regex: '(^[EeKkGgDdSsPpHh]\\d{8}$)|(^(([Ee][a-fA-F])|([DdSsPp][Ee])|([Kk][Jj])|([Mm][Aa])|(1[45]))\\d{7}$)' },
+      { name: '香港身份证号', regex: '^[a-zA-Z]\\d{6}\\([\\dA]\\)$' },
+      { name: '澳门身份证号', regex: '^[1|5|7]\\d{6}\\(\\d\\)$' },
+      { name: '台湾身份证号', regex: '^[a-zA-Z][0-9]{9}$' },
+      { name: '帐号是否合法(字母开头，允许5-16字节，允许字母数字下划线)', regex: '[a-zA-Z][a-zA-Z0-9_]{4,15}' },
+      { name: '密码(以字母开头，长度在6~18之间，只能包含字母、数字和下划线)', regex: '[a-zA-Z]\\w{5,17}' },
+      { name: '强密码(必须包含大小写字母和数字的组合，不能使用特殊字符，长度在8-10之间)', regex: '(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{8,10}' },
+      { name: '密码强度校验（最少6位，至少包含1个大写字母、1个小写字母、1个数字、1个特殊字符）', regex: '^\\S*(?=\\S{6,})(?=\\S*\\d)(?=\\S*[A-Z])(?=\\S*[a-z])(?=\\S*[!@#$%^&*? ])\\S*$' },
+      { name: '首尾空白字符', regex: '^\\s*|\\s*$' },
+      { name: '腾讯QQ号', regex: '[1-9][0-9]{4,}' },
+      { name: '邮政编码（中国）', regex: '[1-9]\\d{5}(?!\\d)' },
+      { name: 'A股代码', regex: '^(s[hz]|S[HZ])(000[\\d]{3}|002[\\d]{3}|300[\\d]{3}|600[\\d]{3}|60[\\d]{4})$' },
+      { name: 'md5格式(32位)', regex: '^[a-fA-F0-9]{32}' },
+      { name: '版本号（X.Y.Z）', regex: '^\\d+(?:\\.\\d+){2}$' },
+      { name: 'base64格式', regex: '^\\s*data:(?:[a-z]+\\/[a-z0-9-+.]+(?:;[a-z-]+=[a-z0-9-]+)?)?(?:;base64)?,([a-z0-9!$&\'()*+;=\\-._~:@/?%\\s,]*?)\\s*$' },
+      { name: '银行卡号（宽松，16位或19位）', regex: '^(?:[1-9]{1})(?:\\d{15}|\\d{18})$' },
+      { name: '车牌号(新能源+非新能源)', regex: '^(?:[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领 A-Z]{1}[A-HJ-NP-Z]{1}(?:(?:[0-9]{5}[DF])|(?:[DF](?:[A-HJ-NP-Z0-9])[0-9]{4})))|(?:[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领 A-Z]{1}[A-Z]{1}[A-HJ-NP-Z0-9]{4}[A-HJ-NP-Z0-9 挂学警港澳]{1})$' },
+      { name: '新能源车牌号', regex: '[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领 A-Z]{1}[A-HJ-NP-Z]{1}(([0-9]{5}[DF])|([DF][A-HJ-NP-Z0-9][0-9]{4}))$' },
+      { name: '非新能源车牌号', regex: '^[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领 A-Z]{1}[A-HJ-NP-Z]{1}[A-Z0-9]{4}[A-Z0-9挂学警港澳]{1}$' },
+      { name: '国内火车车次', regex: '^[GCDZTSPKXLY1-9]\\d{1,4}$' },
+      { name: '统一社会信用代码', regex: '^[0-9A-HJ-NPQRTUWXY]{2}\\d{6}[0-9A-HJ-NPQRTUWXY]{10}$' },
+      { name: 'GUID/UUID', regex: '^[a-f\\d]{4}(?:[a-f\\d]{4}-){4}[a-f\\d]{12}$' },
+      { name: '股票代码（A股）', regex: '^(s[hz]|S[HZ])(000[\\d]{3}|002[\\d]{3}|300[\\d]{3}|600[\\d]{3}|60[\\d]{4})$' },
+    ]
+  },
+];
+
 const CheatSheet = () => (
   <Accordion type="single" collapsible className="w-full">
     <AccordionItem value="char-classes">
@@ -72,9 +203,9 @@ const CheatSheet = () => (
           <li><code className="font-code bg-muted px-1 py-0.5 rounded">*</code> - 0个或多个</li>
           <li><code className="font-code bg-muted px-1 py-0.5 rounded">+</code> - 1个或多个</li>
           <li><code className="font-code bg-muted px-1 py-0.5 rounded">?</code> - 0个或1个</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">{`{n}`}</code> - 正好n次</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">{`{n,}`}</code> - n次或更多次</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">{`{n,m}`}</code> - n到m次之间</li>
+          <li><code className="font-code bg-muted px-1 py-0.5 rounded">{'{n}'}</code> - 正好n次</li>
+          <li><code className="font-code bg-muted px-1 py-0.5 rounded">{'{n,}'}</code> - n次或更多次</li>
+          <li><code className="font-code bg-muted px-1 py-0.5 rounded">{'{n,m}'}</code> - n到m次之间</li>
         </ul>
       </AccordionContent>
     </AccordionItem>
@@ -131,6 +262,26 @@ const CheatSheet = () => (
                 <p className="pl-2 mt-1 text-muted-foreground">原子分组：匹配 'pattern'，但禁止引擎在该分组内进行回溯。</p>
             </li>
         </ul>
+      </AccordionContent>
+    </AccordionItem>
+    <AccordionItem value="common-patterns">
+      <AccordionTrigger>常用模式</AccordionTrigger>
+      <AccordionContent>
+        <div className="space-y-6">
+          {commonPatterns.map(section => (
+            <div key={section.category}>
+              <h4 className="font-bold text-base mb-2 sticky top-0 bg-background/95 backdrop-blur-sm py-2">꧁ {section.category} ꧂</h4>
+              <ul className="space-y-1">
+                {section.patterns.map(p => (
+                  <li key={p.name} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 p-2 rounded-md hover:bg-muted/50">
+                    <span className="text-sm">{p.name}</span>
+                    <code className="font-code bg-muted px-2 py-1 rounded text-sm text-right break-all">{p.regex}</code>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
       </AccordionContent>
     </AccordionItem>
   </Accordion>
@@ -436,7 +587,7 @@ export default function RegexPlaygroundPage() {
                         <div key={idx}>{line || '\u00A0'}</div>
                       ))}
                     </div>
-                     <Button variant="ghost" size="sm" className="absolute top-4 right-2" onClick={() => handleCopy(replacementResult, '替换结果')}>
+                     <Button variant="ghost" size="sm" className="absolute top-4 right-2" onClick={()={() => handleCopy(replacementResult, '替换结果')}}>
                       <ClipboardCopy className="h-4 w-4" />
                     </Button>
                   </CardContent>
@@ -560,3 +711,7 @@ export default function RegexPlaygroundPage() {
     </div>
   );
 }
+
+    
+
+    
