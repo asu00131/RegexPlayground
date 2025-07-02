@@ -144,6 +144,21 @@ export default function RegexPlaygroundPage() {
     }
   }, [regex, testString, replacementString, globalSearch, ignoreCase, multiline, regexError]);
 
+  const availableGroupIndices = useMemo(() => {
+    if (matches.length === 0) return [];
+    const allIndices = new Set<number>();
+    matches.forEach(match => {
+        if (match.length > 1) {
+            for (let i = 1; i < match.length; i++) {
+                if (match[i] !== undefined) {
+                    allIndices.add(i);
+                }
+            }
+        }
+    });
+    return Array.from(allIndices).sort((a, b) => a - b);
+  }, [matches]);
+
   const handleCopyAllMatches = useCallback(() => {
     if (matches.length === 0) return;
     const allMatchesText = matches.map(match => match[0]).join('\n');
@@ -402,7 +417,28 @@ export default function RegexPlaygroundPage() {
                         复制全部
                       </Button>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    {availableGroupIndices.length > 0 && (
+                      <CardContent className="py-4 border-b">
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">批量复制分组</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {availableGroupIndices.map(groupIndex => (
+                              <Button
+                                key={groupIndex}
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleCopyAllOfOneGroup(groupIndex - 1)}
+                                title={`复制所有匹配中的分组 ${groupIndex} 的内容`}
+                              >
+                                <ClipboardCopy className="mr-2 h-3 w-3" />
+                                复制所有分组 {groupIndex}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      </CardContent>
+                    )}
+                    <CardContent className="space-y-4 pt-4">
                       {matches.length > 0 ? (
                         matches.map((match, index) => (
                           <Card key={index} className="bg-muted/50">
@@ -441,18 +477,6 @@ export default function RegexPlaygroundPage() {
                                           <span className="text-muted-foreground">${groupIndex + 1}:</span>
                                           <pre className="flex-grow overflow-x-auto mr-2">{group}</pre>
                                           <div className="flex items-center gap-1 shrink-0">
-                                            {index === 0 && (
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="h-6 px-1.5 text-xs"
-                                                onClick={() => handleCopyAllOfOneGroup(groupIndex)}
-                                                title={`复制所有匹配中的分组 ${groupIndex + 1}`}
-                                              >
-                                                <ClipboardCopy className="mr-1 h-3 w-3" />
-                                                复制该组所有
-                                              </Button>
-                                            )}
                                             <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => handleCopy(group, `分组 ${groupIndex + 1}`)}>
                                               <ClipboardCopy className="h-3 w-3" />
                                               <span className="sr-only">复制分组 {groupIndex + 1}</span>
