@@ -125,6 +125,30 @@ export default function RegexPlaygroundPage() {
     });
   }, [toast]);
 
+  const { matches, replacementResult } = useMemo(() => {
+    if (regexError) {
+      return { matches: [], replacementResult: '无效的正则表达式' };
+    }
+    try {
+      const flags = `${globalSearch ? 'g' : ''}${ignoreCase ? 'i' : ''}${multiline ? 'm' : ''}`;
+      const re = new RegExp(regex, flags);
+      
+      const currentMatches = globalSearch ? [...testString.matchAll(re)] : (testString.match(re) ? [testString.match(re)!] : []);
+      const currentReplacementResult = testString.replace(re, replacementString);
+
+      return { matches: currentMatches, replacementResult: currentReplacementResult };
+    } catch (e) {
+      // 此情况应由useEffect覆盖，但作为备用方案：
+      return { matches: [], replacementResult: '无效的正则表达式' };
+    }
+  }, [regex, testString, replacementString, globalSearch, ignoreCase, multiline, regexError]);
+
+  const handleCopyAllMatches = useCallback(() => {
+    if (matches.length === 0) return;
+    const allMatchesText = matches.map(match => match[0]).join('\n');
+    handleCopy(allMatchesText, '所有匹配结果');
+  }, [matches, handleCopy]);
+
   const handleGenerateAndInsertData = useCallback(async () => {
     if (!regex || regexError) {
       toast({
@@ -155,24 +179,6 @@ export default function RegexPlaygroundPage() {
       setIsInsertingSample(false);
     }
   }, [regex, regexError, toast]);
-
-  const { matches, replacementResult } = useMemo(() => {
-    if (regexError) {
-      return { matches: [], replacementResult: '无效的正则表达式' };
-    }
-    try {
-      const flags = `${globalSearch ? 'g' : ''}${ignoreCase ? 'i' : ''}${multiline ? 'm' : ''}`;
-      const re = new RegExp(regex, flags);
-      
-      const currentMatches = globalSearch ? [...testString.matchAll(re)] : (testString.match(re) ? [testString.match(re)!] : []);
-      const currentReplacementResult = testString.replace(re, replacementString);
-
-      return { matches: currentMatches, replacementResult: currentReplacementResult };
-    } catch (e) {
-      // 此情况应由useEffect覆盖，但作为备用方案：
-      return { matches: [], replacementResult: '无效的正则表达式' };
-    }
-  }, [regex, testString, replacementString, globalSearch, ignoreCase, multiline, regexError]);
 
   const highlightedTestString = useMemo(() => {
     if (regexError || !testString || matches.length === 0) {
@@ -373,8 +379,12 @@ export default function RegexPlaygroundPage() {
               </TabsList>
               <TabsContent value="matches" className="flex-grow overflow-y-auto mt-4 pr-2">
                  <Card>
-                    <CardHeader>
+                    <CardHeader className="flex flex-row items-center justify-between">
                       <CardTitle className="font-bold">匹配结果 <Badge variant="secondary" className="ml-2">{matches.length}</Badge></CardTitle>
+                      <Button variant="outline" size="sm" onClick={handleCopyAllMatches} disabled={matches.length === 0}>
+                        <ClipboardCopy className="mr-2 h-4 w-4" />
+                        复制全部
+                      </Button>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       {matches.length > 0 ? (
@@ -392,9 +402,13 @@ export default function RegexPlaygroundPage() {
                             <CardContent>
                               <p className="text-sm font-medium mb-2">分组：</p>
                               {match.length > 1 ? ([...match].slice(1).map((group, groupIndex) => (
-                                <div key={groupIndex} className="flex items-center justify-between text-sm mb-1 font-code">
+                                <div key={groupIndex} className="flex items-center justify-between text-sm mb-1 font-code gap-2 bg-background p-1.5 rounded-md border">
                                     <span className="text-muted-foreground">${groupIndex + 1}:</span>
-                                    <pre className="p-1 bg-background rounded-md">{group ?? 'undefined'}</pre>
+                                    <pre className="flex-grow overflow-x-auto">{group ?? 'undefined'}</pre>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => handleCopy(group ?? '', `分组 ${groupIndex + 1}`)}>
+                                      <ClipboardCopy className="h-3 w-3" />
+                                      <span className="sr-only">复制分组 {groupIndex + 1}</span>
+                                    </Button>
                                 </div>
                               ))) : (<p className="text-sm text-muted-foreground">未找到捕获分组。</p>)}
                             </CardContent>
