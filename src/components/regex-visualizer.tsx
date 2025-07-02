@@ -41,7 +41,7 @@ function parse(regex: string): { ast: AstNode | null, error: string | null } {
         return { ast: null, error: e.message };
     }
 
-    const tokens = regex.match(/\\.|[+*?](?:\?)?|\{\d+,?\d*\}|\(\?[:=!]|\(|\)|\||\[.*?\]|[^\\()\[\]+*?{}^$|]+/g) || [];
+    const tokens = regex.match(/\\.|[+*?](?:\?)?|\{\d+,?\d*\}|\(\?[:=!]|\(|\)|\||\^|\$|\[.*?\]|[^\\()\[\]+*?{}^$|]+/g) || [];
     let position = 0;
     let groupIndex = 1;
 
