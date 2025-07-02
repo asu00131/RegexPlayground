@@ -236,7 +236,17 @@ export default function RegexPlaygroundPage() {
         </div>
       </header>
 
-      <main className="flex-grow container mx-auto p-4">
+      <main className="flex-grow container mx-auto p-4 flex flex-col gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-bold">表达式可视化</CardTitle>
+            <CardDescription>正则表达式的图形化表示。</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RegexVisualizer regex={regex} />
+          </CardContent>
+        </Card>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="flex flex-col gap-6">
             <Card>
@@ -357,9 +367,8 @@ export default function RegexPlaygroundPage() {
           
           <div className="lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)]">
             <Tabs defaultValue="matches" className="h-full flex flex-col">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="matches">匹配</TabsTrigger>
-                <TabsTrigger value="visualization">可视化</TabsTrigger>
                 <TabsTrigger value="cheatsheet">速查表</TabsTrigger>
               </TabsList>
               <TabsContent value="matches" className="flex-grow overflow-y-auto mt-4 pr-2">
@@ -396,17 +405,6 @@ export default function RegexPlaygroundPage() {
                       )}
                     </CardContent>
                   </Card>
-              </TabsContent>
-              <TabsContent value="visualization" className="flex-grow overflow-y-auto mt-4 pr-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="font-bold">表达式可视化</CardTitle>
-                    <CardDescription>正则表达式的图形化表示。</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <RegexVisualizer regex={regex} />
-                  </CardContent>
-                </Card>
               </TabsContent>
               <TabsContent value="cheatsheet" className="flex-grow overflow-y-auto mt-4 pr-2">
                 <Card>
