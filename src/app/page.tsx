@@ -33,7 +33,7 @@ import {
   Sparkles,
   AlertCircle,
   Loader2,
-  ClipboardPaste,
+  Trash2,
 } from 'lucide-react';
 import RegexVisualizer from '@/components/regex-visualizer';
 
@@ -103,10 +103,8 @@ export default function RegexPlaygroundPage() {
   const [multiline, setMultiline] = useState(false);
   
   const [regexError, setRegexError] = useState<string | null>(null);
+  const [isInsertingSample, setIsInsertingSample] = useState(false);
 
-  const [generatedData, setGeneratedData] = useState<string>('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  
   const scrollSyncRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -127,19 +125,7 @@ export default function RegexPlaygroundPage() {
     });
   }, [toast]);
 
-  const handleInsertData = useCallback(() => {
-    if (generatedData) {
-      setTestString((prevTestString) =>
-        prevTestString ? `${generatedData}\n${prevTestString}` : generatedData
-      );
-      toast({
-        title: '数据已插入',
-        description: '生成的示例数据已添加到测试字符串的开头。',
-      });
-    }
-  }, [generatedData, toast]);
-
-  const handleGenerateData = useCallback(async () => {
+  const handleGenerateAndInsertData = useCallback(async () => {
     if (!regex || regexError) {
       toast({
         variant: 'destructive',
@@ -148,11 +134,16 @@ export default function RegexPlaygroundPage() {
       });
       return;
     }
-    setIsGenerating(true);
-    setGeneratedData('');
+    setIsInsertingSample(true);
     try {
       const result = await generateRegexData({ regex });
-      setGeneratedData(result.sampleData);
+      setTestString((prevTestString) =>
+        prevTestString ? `${result.sampleData}\n${prevTestString}` : result.sampleData
+      );
+      toast({
+        title: '数据已插入',
+        description: '生成的示例数据已添加到测试字符串的开头。',
+      });
     } catch (error) {
       console.error('生成数据时出错:', error);
       toast({
@@ -161,7 +152,7 @@ export default function RegexPlaygroundPage() {
         description: '无法为此正则表达式生成数据。',
       });
     } finally {
-      setIsGenerating(false);
+      setIsInsertingSample(false);
     }
   }, [regex, regexError, toast]);
 
@@ -281,33 +272,16 @@ export default function RegexPlaygroundPage() {
                     <Label htmlFor="multiline">多行 (m)</Label>
                   </div>
                 </div>
-                <div className="mt-4 border-t pt-4">
-                    <Button onClick={handleGenerateData} disabled={isGenerating}>
-                        {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                        生成示例数据
-                    </Button>
-                    {generatedData && (
-                        <Card className="mt-4 bg-muted/50">
-                            <CardContent className="p-4">
-                               <p className="font-code text-sm break-all">{generatedData}</p>
-                                <div className="mt-2 flex items-center gap-2">
-                                  <Button variant="ghost" size="sm" onClick={() => handleCopy(generatedData, '生成的示例数据')}>
-                                      <ClipboardCopy className="mr-2 h-4 w-4" /> 复制
-                                  </Button>
-                                  <Button variant="ghost" size="sm" onClick={handleInsertData}>
-                                      <ClipboardPaste className="mr-2 h-4 w-4" /> 插入示例数据
-                                  </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-                </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="font-bold">测试字符串</CardTitle>
+                <Button onClick={handleGenerateAndInsertData} disabled={isInsertingSample} size="sm">
+                  {isInsertingSample ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                  插入示例数据
+                </Button>
               </CardHeader>
               <CardContent>
                  <div className="relative h-48 border rounded-md">
@@ -335,6 +309,12 @@ export default function RegexPlaygroundPage() {
                       spellCheck="false"
                       aria-label="测试字符串输入"
                     />
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <Button variant="destructive" onClick={() => setTestString('')}>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    清除
+                  </Button>
                 </div>
               </CardContent>
             </Card>
