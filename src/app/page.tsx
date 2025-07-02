@@ -76,7 +76,7 @@ const commonPatterns = [
         { name: '由数字、26个英文字母或者下划线组成的字符串', regex: '\\w+' },
         { name: '中文、英文、数字包括下划线', regex: '[\\u4E00-\\u9FA5A-Za-z0-9_]+' },
         { name: '中文、英文、数字但不包括下划线等符号', regex: '[\\u4E00-\\u9FA5A-Za-z0-9]+' },
-        { name: '可以输入含有^%&\',;=?$\\等字符', regex: '[\'^%&,;=?$\\\\]+' },
+        { name: "可以输入含有^%&',;=?$\\等字符", regex: "[\\^%&',;=?$\\\\]+" },
         { name: '禁止输入含有~的字符', regex: '[^~]+' },
         { name: '中文字符（宽松）', regex: '[\\u4e00-\\u9fa5]' },
         { name: '中文汉字（严谨）', regex: '^(?:[\\u3400-\\u4DB5\\u4E00-\\u9FEA\\uFA0E\\uFA0F\\uFA11\\uFA13\\uFA14\\uFA1F\\uFA21\\uFA23\\uFA24\\uFA27-\\uFA29]|[\\uD840-\\uD868\\uD86A-\\uD86C\\uD86F-\\uD872\\uD874-\\uD879][\\uDC00-\\uDFFF]|\\uD869[\\uDC00-\\uDED6\\uDF00-\\uDFFF]|\\uD86D[\\uDC00-\\uDF34\\uDF40-\\uDFFF]|\\uD86E[\\uDC00-\\uDC1D\\uDC20-\\uDFFF]|\\uD873[\\uDC00-\\uDEA1\\uDEB0-\\uDFFF]|\\uD87A[\\uDC00-\\uDFE0])+$' },
