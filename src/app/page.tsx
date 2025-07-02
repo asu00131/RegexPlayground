@@ -94,13 +94,13 @@ const CheatSheet = () => (
 
 export default function RegexPlaygroundPage() {
   const { toast } = useToast();
-  const [regex, setRegex] = useState('(\\d+)aa(\\d+)bb');
-  const [testString, setTestString] = useState('11aa22bb33cc\n743aa47bb\n62aa2bb\nThis line will not match.');
+  const [regex, setRegex] = useState('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$|<.*?>|1[3-9]\\d{9}');
+  const [testString, setTestString] = useState('My email is example@domain.com, but not fake@domain.\nThis is a <b>bold</b> tag and this is a <i>italic</i> one.\nPhone numbers: 13912345678, 18687654321.\nInvalid phone: 12011112222.');
   const [replacementString, setReplacementString] = useState('【前】$2【-中间-】$1【后】');
   
   const [globalSearch, setGlobalSearch] = useState(true);
   const [ignoreCase, setIgnoreCase] = useState(false);
-  const [multiline, setMultiline] = useState(false);
+  const [multiline, setMultiline] = useState(true);
   
   const [regexError, setRegexError] = useState<string | null>(null);
   const [isInsertingSample, setIsInsertingSample] = useState(false);
@@ -232,12 +232,12 @@ export default function RegexPlaygroundPage() {
       <header className="border-b sticky top-0 bg-background/95 backdrop-blur z-10">
         <div className="container mx-auto px-4 py-3">
           <h1 className="text-2xl font-bold font-headline">正则表达式乐园</h1>
-          <p className="text-muted-foreground text-sm">测试、可视化和从正则表达式生成数据。</p>
+          <p className="text-muted-foreground text-sm">在线测试和调试正则表达式。</p>
         </div>
       </header>
 
       <main className="flex-grow container mx-auto p-4 flex flex-col gap-6">
-        <Card>
+        <Card className="border-t-4 border-destructive">
           <CardHeader>
             <CardTitle className="font-bold">表达式可视化</CardTitle>
             <CardDescription>正则表达式的图形化表示。</CardDescription>
@@ -290,7 +290,7 @@ export default function RegexPlaygroundPage() {
                 <CardTitle className="font-bold">测试字符串</CardTitle>
                 <Button onClick={handleGenerateAndInsertData} disabled={isInsertingSample} size="sm">
                   {isInsertingSample ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                  插入示例数据
+                  AI 插入数据
                 </Button>
               </CardHeader>
               <CardContent>

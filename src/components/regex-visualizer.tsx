@@ -41,7 +41,7 @@ function parse(regex: string): { ast: AstNode | null, error: string | null } {
         return { ast: null, error: e.message };
     }
 
-    const tokens = regex.match(/\\.|[+*?](?:\?)?|\{\d+,?\d*\}|\[\^?.*?\]|\(\?[:=!]|\(|\)|\||\^|\$|[^\\()\[\]+*?{}^$|]+/g) || [];
+    const tokens = regex.match(/\\.|[+*?](?:\?)?|\{\d+,?\d*\}|\[\^?.*?\]|\(\?[:=!<]|\(|\)|\||\^|\$|[^\\()\[\]+*?{}^$|]+/g) || [];
     let position = 0;
     let groupIndex = 1;
 
@@ -84,7 +84,12 @@ function parse(regex: string): { ast: AstNode | null, error: string | null } {
               label = '正向先行断言';
             } else if (token === '(?!') {
               label = '负向先行断言';
+            } else if (token === '(?<=') {
+              label = '正向后行断言';
+            } else if (token === '(?<!') {
+              label = '负向后行断言';
             }
+
 
             const options = [];
             options.push(parseSequence());
@@ -137,13 +142,18 @@ function parse(regex: string): { ast: AstNode | null, error: string | null } {
                 label = commonRanges[content].label;
                 description = commonRanges[content].desc;
             } else {
-                 label = content.length > 8 ? '字符集' : content;
+                 label = '字符集';
                  description = inverted 
                      ? `匹配除 "${content}" 以外的任意字符。` 
                      : `匹配 "${content}" 中的任意一个字符。`;
             }
 
             return { type: 'char-class', raw: token, description, label: (inverted ? '非: ' : '') + label };
+        }
+        
+        if (token.startsWith('\\') && token.length > 1) {
+            const char = token.substring(1);
+            return { type: 'literal', value: char, raw: token, label: char, description: `匹配字面量字符: "${char}"` };
         }
 
         return { type: 'literal', value: token, raw: token, label: token, description: `匹配字面量字符: "${token}"` };
@@ -249,7 +259,7 @@ const Quantifier = ({ node }: { node: AstNode & { type: 'quantifier' } }) => {
         )}
         {hasLoop && (
           <div className="absolute bottom-0 left-0 right-0 h-4" aria-hidden="true">
-            <div className="w-full h-full border-b-2 border-x-2 border-destructive border-dashed rounded-b-md flex items-center">
+            <div className={cn("w-full h-full border-b-2 border-x-2 border-destructive rounded-b-md flex items-center", !node.greedy && "border-dashed")}>
               <div className="w-0 h-0 border-t-[4px] border-t-transparent border-r-[5px] border-r-destructive border-b-[4px] border-b-transparent ml-2"></div>
             </div>
           </div>
@@ -284,7 +294,7 @@ const Terminal = ({ node }: { node: AstNode & { type: 'literal' | 'char-class' |
     if (node.type === 'anchor') className = 'border-violet-400';
     if (node.type === 'literal') className = 'border-sky-400';
 
-    return <NodeBox label={node.label} raw={node.raw ?? node.value} description={node.description} className={className} />;
+    return <NodeBox label={node.label} raw={node.raw} description={node.description} className={className} />;
 };
 
 const StartNode = () => (
