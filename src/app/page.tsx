@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useCallback, useEffect, Fragment, useRef } from 'react';
@@ -151,7 +152,7 @@ export default function RegexPlaygroundPage() {
 
   const handleCopyAllGroups = useCallback((match: RegExpMatchArray, matchIndex: number) => {
     if (match.length <= 1) return;
-    const allGroupsText = [...match].slice(1).map(g => g ?? '').join('\n');
+    const allGroupsText = [...match].slice(1).filter(g => g !== undefined).join('\n');
     handleCopy(allGroupsText, `匹配 ${matchIndex + 1} 的所有分组`);
   }, [handleCopy]);
 
