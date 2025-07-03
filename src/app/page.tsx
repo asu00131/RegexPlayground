@@ -76,7 +76,7 @@ const commonPatterns = [
         { name: '由数字、26个英文字母或者下划线组成的字符串', regex: '\\w+' },
         { name: '中文、英文、数字包括下划线', regex: '[\\u4E00-\\u9FA5A-Za-z0-9_]+' },
         { name: '中文、英文、数字但不包括下划线等符号', regex: '[\\u4E00-\\u9FA5A-Za-z0-9]+' },
-        { name: "可以输入含有^%&',;=?$\\等字符", regex: "[\\^%&',;=?$\\\\]+" },
+        { name: "可以输入含有^%&\\',;=?$\\等字符", regex: "[\\^%&',;=?$\\\\]+" },
         { name: '禁止输入含有~的字符', regex: '[^~]+' },
         { name: '中文字符（宽松）', regex: '[\\u4e00-\\u9fa5]' },
         { name: '中文汉字（严谨）', regex: '^(?:[\\u3400-\\u4DB5\\u4E00-\\u9FEA\\uFA0E\\uFA0F\\uFA11\\uFA13\\uFA14\\uFA1F\\uFA21\\uFA23\\uFA24\\uFA27-\\uFA29]|[\\uD840-\\uD868\\uD86A-\\uD86C\\uD86F-\\uD872\\uD874-\\uD879][\\uDC00-\\uDFFF]|\\uD869[\\uDC00-\\uDED6\\uDF00-\\uDFFF]|\\uD86D[\\uDC00-\\uDF34\\uDF40-\\uDFFF]|\\uD86E[\\uDC00-\\uDC1D\\uDC20-\\uDFFF]|\\uD873[\\uDC00-\\uDEA1\\uDEB0-\\uDFFF]|\\uD87A[\\uDC00-\\uDFE0])+$' },
@@ -156,7 +156,7 @@ const commonPatterns = [
       { name: 'A股代码', regex: '^(s[hz]|S[HZ])(000[\\d]{3}|002[\\d]{3}|300[\\d]{3}|600[\\d]{3}|60[\\d]{4})$' },
       { name: 'md5格式(32位)', regex: '^[a-fA-F0-9]{32}' },
       { name: '版本号（X.Y.Z）', regex: '^\\d+(?:\\.\\d+){2}$' },
-      { name: 'base64格式', regex: '^\\s*data:(?:[a-z]+\\/[a-z0-9-+.]+(?:;[a-z-]+=[a-z0-9-]+)?)?(?:;base64)?,([a-z0-9!$&\'()*+;=\\-._~:@/?%\\s,]*?)\\s*$' },
+      { name: 'base64格式', regex: '^\\s*data:(?:[a-z]+\\/[a-z0-9-+.]+(?:;[a-z-]+=[a-z0-9-]+)?)?(?:;base64)?,([a-z0-9!$&\'()*+;=\\-.\\_~:@/?%\\s,]*?)\\s*$' },
       { name: '银行卡号（宽松，16位或19位）', regex: '^(?:[1-9]{1})(?:\\d{15}|\\d{18})$' },
       { name: '车牌号(新能源+非新能源)', regex: '^(?:[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领 A-Z]{1}[A-HJ-NP-Z]{1}(?:(?:[0-9]{5}[DF])|(?:[DF](?:[A-HJ-NP-Z0-9])[0-9]{4})))|(?:[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领 A-Z]{1}[A-Z]{1}[A-HJ-NP-Z0-9]{4}[A-HJ-NP-Z0-9 挂学警港澳]{1})$' },
       { name: '新能源车牌号', regex: '[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领 A-Z]{1}[A-HJ-NP-Z]{1}(([0-9]{5}[DF])|([DF][A-HJ-NP-Z0-9][0-9]{4}))$' },
@@ -173,38 +173,93 @@ const CheatSheet = () => (
     <AccordionItem value="char-classes">
       <AccordionTrigger>字符类</AccordionTrigger>
       <AccordionContent>
-        <ul className="space-y-2 text-sm">
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">.</code> - 任何字符 (换行符除外)</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">\d</code> - 任何数字</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">\D</code> - 任何非数字字符</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">\w</code> - 任何单词字符 (a-z, A-Z, 0-9, _)</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">\W</code> - 任何非单词字符</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">\s</code> - 任何空白字符</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">\S</code> - 任何非空白字符</li>
+        <ul className="space-y-4 text-sm">
+          <li>
+            <code className="font-code bg-muted px-1 py-0.5 rounded">.</code>
+            <p className="pl-2 mt-1 text-muted-foreground">匹配除换行符以外的任何单个字符。</p>
+          </li>
+          <li>
+            <code className="font-code bg-muted px-1 py-0.5 rounded">\d</code>
+            <p className="pl-2 mt-1 text-muted-foreground">匹配任何数字 (等同于 <code className="font-code bg-muted/80 px-1 rounded">[0-9]</code>)。</p>
+          </li>
+          <li>
+            <code className="font-code bg-muted px-1 py-0.5 rounded">\D</code>
+            <p className="pl-2 mt-1 text-muted-foreground">匹配任何非数字字符 (等同于 <code className="font-code bg-muted/80 px-1 rounded">[^0-9]</code>)。</p>
+          </li>
+          <li>
+            <code className="font-code bg-muted px-1 py-0.5 rounded">\w</code>
+            <p className="pl-2 mt-1 text-muted-foreground">匹配任何单词字符 (字母、数字和下划线，等同于 <code className="font-code bg-muted/80 px-1 rounded">[A-Za-z0-9_]</code>)。</p>
+          </li>
+          <li>
+            <code className="font-code bg-muted px-1 py-0.5 rounded">\W</code>
+            <p className="pl-2 mt-1 text-muted-foreground">匹配任何非单词字符 (等同于 <code className="font-code bg-muted/80 px-1 rounded">[^A-Za-z0-9_]</code>)。</p>
+          </li>
+          <li>
+            <code className="font-code bg-muted px-1 py-0.5 rounded">\s</code>
+            <p className="pl-2 mt-1 text-muted-foreground">匹配任何空白字符 (空格、制表符、换页符等)。</p>
+          </li>
+          <li>
+            <code className="font-code bg-muted px-1 py-0.5 rounded">\S</code>
+            <p className="pl-2 mt-1 text-muted-foreground">匹配任何非空白字符。</p>
+          </li>
         </ul>
       </AccordionContent>
     </AccordionItem>
     <AccordionItem value="anchors">
       <AccordionTrigger>锚点</AccordionTrigger>
       <AccordionContent>
-        <ul className="space-y-2 text-sm">
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">^</code> - 字符串开头</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">$</code> - 字符串结尾</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">\b</code> - 单词边界</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">\B</code> - 非单词边界</li>
+        <ul className="space-y-4 text-sm">
+            <li>
+                <code className="font-code bg-muted px-1 py-0.5 rounded">^</code>
+                <p className="pl-2 mt-1 text-muted-foreground">匹配字符串的开头。</p>
+            </li>
+            <li>
+                <code className="font-code bg-muted px-1 py-0.5 rounded">$</code>
+                <p className="pl-2 mt-1 text-muted-foreground">匹配字符串的结尾。</p>
+            </li>
+            <li>
+                <code className="font-code bg-muted px-1 py-0.5 rounded">\b</code>
+                <p className="pl-2 mt-1 text-muted-foreground">匹配单词边界。单词被视为由单词字符 <code className="font-code bg-muted/80 px-1 rounded">[A-Za-z0-9_]</code> 组成的序列。此定义在处理非 ASCII 字符（如中文）时可能与预期不符。</p>
+            </li>
+            <li>
+                <code className="font-code bg-muted px-1 py-0.5 rounded">\B</code>
+                <p className="pl-2 mt-1 text-muted-foreground">匹配非单词边界。</p>
+            </li>
         </ul>
       </AccordionContent>
     </AccordionItem>
     <AccordionItem value="quantifiers">
       <AccordionTrigger>量词</AccordionTrigger>
       <AccordionContent>
-        <ul className="space-y-2 text-sm">
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">*</code> - 0个或多个</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">+</code> - 1个或多个</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">?</code> - 0个或1个</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">{'{n}'}</code> - 正好n次</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">{'{n,}'}</code> - n次或更多次</li>
-          <li><code className="font-code bg-muted px-1 py-0.5 rounded">{'{n,m}'}</code> - n到m次之间</li>
+         <ul className="space-y-4 text-sm">
+            <li>
+                <code className="font-code bg-muted px-1 py-0.5 rounded">*</code>
+                <p className="pl-2 mt-1 text-muted-foreground">匹配前面的元素零次或多次。</p>
+            </li>
+            <li>
+                <code className="font-code bg-muted px-1 py-0.5 rounded">+</code>
+                <p className="pl-2 mt-1 text-muted-foreground">匹配前面的元素一次或多次。</p>
+            </li>
+            <li>
+                <code className="font-code bg-muted px-1 py-0.5 rounded">?</code>
+                <p className="pl-2 mt-1 text-muted-foreground">匹配前面的元素零次或一次。</p>
+            </li>
+            <li>
+                <code className="font-code bg-muted px-1 py-0.5 rounded">{'{n}'}</code>
+                <p className="pl-2 mt-1 text-muted-foreground">精确匹配前面的元素 n 次。</p>
+            </li>
+            <li>
+                <code className="font-code bg-muted px-1 py-0.5 rounded">{'{n,}'}</code>
+                <p className="pl-2 mt-1 text-muted-foreground">匹配前面的元素至少 n 次。</p>
+            </li>
+            <li>
+                <code className="font-code bg-muted px-1 py-0.5 rounded">{'{n,m}'}</code>
+                <p className="pl-2 mt-1 text-muted-foreground">匹配前面的元素 n 到 m 次。</p>
+            </li>
+            <li className="!mt-6 pt-4 border-t">
+                <p className="font-bold text-base">贪婪与非贪婪</p>
+                <p className="text-muted-foreground">默认情况下，量词是“贪婪的”，会匹配尽可能多的字符。在其后添加 <code className="font-code bg-muted/80 px-1 rounded">?</code> 可使其变为“非贪婪”（或“懒惰的”），从而匹配尽可能少的字符。</p>
+            </li>
         </ul>
       </AccordionContent>
     </AccordionItem>

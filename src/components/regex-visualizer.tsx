@@ -30,7 +30,7 @@ const tokenInfo: Record<string, { type: 'char-class' | 'anchor' | 'control-char'
     '.': { type: 'char-class', description: '匹配除换行符以外的任何字符。', label: '任意字符' },
     '^': { type: 'anchor', description: '匹配字符串的开头。', label: '开头' },
     '$': { type: 'anchor', description: '匹配字符串的结尾。', label: '结尾' },
-    '\\b': { type: 'anchor', description: '匹配单词边界。', label: '词边界' },
+    '\\b': { type: 'anchor', description: '匹配单词边界。单词字符定义为 [A-Za-z0-9_]，这在处理非 ASCII 字符时可能与预期不符。', label: '词边界' },
     '\\B': { type: 'anchor', description: '匹配非单词边界。', label: '非词边界' },
     '\\n': { type: 'control-char', description: '匹配换行符。', label: '换行' },
     '\\r': { type: 'control-char', description: '匹配回车符。', label: '回车' },
