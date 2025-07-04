@@ -40,17 +40,26 @@ namespace MyAspNetApi
             {
                 try
                 {
+                    var regexPattern = request.Regex ?? "";
+                    var testString = request.TestString ?? "";
+                    var replacementString = request.ReplacementString ?? "";
+
+                    if (string.IsNullOrEmpty(regexPattern))
+                    {
+                        return Results.Ok(new RegexResponse(System.Array.Empty<MatchResult>(), testString, null));
+                    }
+                    
                     var options = RegexOptions.None;
                     if (request.IgnoreCase) options |= RegexOptions.IgnoreCase;
                     if (request.Multiline) options |= RegexOptions.Multiline;
 
-                    var regex = new Regex(request.Regex, options);
+                    var regex = new Regex(regexPattern, options);
 
                     MatchResult[] matchResults;
 
                     if (request.GlobalSearch)
                     {
-                        var matches = regex.Matches(request.TestString);
+                        var matches = regex.Matches(testString);
                         matchResults = matches.Cast<Match>()
                             .Select(m => new MatchResult(
                                 m.Index,
@@ -60,7 +69,7 @@ namespace MyAspNetApi
                     }
                     else
                     {
-                        var match = regex.Match(request.TestString);
+                        var match = regex.Match(testString);
                         if (match.Success)
                         {
                             matchResults = new MatchResult[] {
@@ -77,8 +86,8 @@ namespace MyAspNetApi
                     }
 
                     var replacementResult = request.GlobalSearch
-                        ? regex.Replace(request.TestString, request.ReplacementString)
-                        : regex.Replace(request.TestString, request.ReplacementString, 1);
+                        ? regex.Replace(testString, replacementString)
+                        : regex.Replace(testString, replacementString, 1);
 
                     return Results.Ok(new RegexResponse(matchResults, replacementResult, null));
                 }
@@ -99,7 +108,7 @@ namespace MyAspNetApi
         }
 
         // ✅ 类型声明必须放在类中
-        public record RegexRequest(string Regex, string TestString, string ReplacementString, bool IgnoreCase, bool Multiline, bool GlobalSearch);
+        public record RegexRequest(string? Regex, string? TestString, string? ReplacementString, bool IgnoreCase, bool Multiline, bool GlobalSearch);
         public record MatchResult(int Index, string[] Groups);
         public record RegexResponse(MatchResult[]? Matches, string? ReplacementResult, string? Error);
     }
