@@ -46,7 +46,82 @@ interface MatchResult {
   groups: string[];
 }
 
-const CheatSheet = () => (
+const commonPatterns = [
+  {
+    category: "꧁ 数字类 ꧂",
+    patterns: [
+      { name: "数字", pattern: "[0-9]*" },
+      { name: "n位的数字", pattern: "\\d{n}" },
+      { name: "至少n位的数字", pattern: "\\d{n,}" },
+      { name: "m-n位的数字", pattern: "\\d{m,n}" },
+      { name: "零和非零开头的数字", pattern: "(0|[1-9][0-9]*)" },
+      { name: "非零开头的最多带两位小数的数字", pattern: "([1-9][0-9]*)+(\\.[0-9]{1,2})?" },
+      { name: "带1-2位小数的正数或负数", pattern: "(-)?\\d+(\\.\\d{1,2})?" },
+      { name: "正数、负数、和小数", pattern: "(-|\\+)?\\d+(\\.\\d+)?" },
+      { name: "有两位小数的正实数", pattern: "[0-9]+(\\.[0-9]{2})?" },
+      { name: "有1~3位小数的正实数", pattern: "[0-9]+(\\.[0-9]{1,3})?" },
+      { name: "非零的正整数", pattern: "[1-9]\\d*" },
+      { name: "非零的负整数", pattern: "-[1-9]\\d*" },
+      { name: "非负整数", pattern: "\\d+" },
+      { name: "非正整数", pattern: "-[1-9]\\d*|0" },
+      { name: "非负浮点数", pattern: "\\d+(\\.\\d+)?" },
+      { name: "非正浮点数", pattern: "((-\\d+(\\.\\d+)?)|(0+(\\.0+)?))" },
+      { name: "正浮点数", pattern: "[1-9]\\d*\\.\\d*|0\\.\\d*[1-9]\\d*" },
+      { name: "浮点数（小数）", pattern: "(-?\\d+)(\\.\\d+)?" },
+    ],
+  },
+  {
+    category: "꧁ 字符串 ꧂",
+    patterns: [
+      { name: "任意字符", pattern: "[\\w\\W]+" },
+      { name: "英文和数字", pattern: "[A-Za-z0-9]+" },
+      { name: "长度为3-20的所有字符", pattern: ".{3,20}" },
+      { name: "由26个英文字母组成的字符串", pattern: "[A-Za-z]+" },
+      { name: "由26个大写英文字母组成的字符串", pattern: "[A-Z]+" },
+      { name: "由26个小写英文字母组成的字符串", pattern: "[a-z]+" },
+      { name: "由数字和26个英文字母组成的字符串", pattern: "[A-Za-z0-9]+" },
+      { name: "由数字、26个英文字母或者下划线组成的字符串", pattern: "\\w+" },
+      { name: "中文、英文、数字包括下划线", pattern: "[\\u4E00-\\u9FA5A-Za-z0-9_]+" },
+      { name: "中文、英文、数字但不包括下划线等符号", pattern: "[\\u4E00-\\u9FA5A-Za-z0-9]+" },
+      { name: "可以输入含有^%&',;=?$\\等字符", pattern: "[^%&',;=?$\\\\]+" },
+      { name: "禁止输入含有~的字符", pattern: "[^~]+" },
+      { name: "中文字符（宽松）", pattern: "[\\u4e00-\\u9fa5]" },
+      { name: "双字节字符", pattern: "[^\\x00-\\xff]" },
+    ],
+  },
+  {
+    category: "꧁ 时间 ꧂",
+    patterns: [
+        { name: "日期格式（宽松）", pattern: "\\d{4}-\\d{1,2}-\\d{1,2}" },
+        { name: "一年的12个月(01～09和1～12)", pattern: "(0?[1-9]|1[0-2])" },
+        { name: "一个月的31天(01～09和1～31)", pattern: "((0?[1-9])|((1|2)[0-9])|30|31)" },
+        { name: "24小时制时间（HH:mm:ss）", pattern: "^(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d$" },
+        { name: "12小时制时间（hh:mm:ss）", pattern: "^(?:1[0-2]|0?[1-9]):[0-5]\\d:[0-5]\\d$" },
+    ],
+  },
+  {
+    category: "꧁ 网络 ꧂",
+    patterns: [
+        { name: "域名", pattern: "[a-zA-Z0-9][-a-zA-Z0-9]{0,62}(\\.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})+\\.?" },
+        { name: "InternetURL", pattern: "(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]" },
+        { name: "IPv4（宽松）", pattern: "\\d+\\.\\d+\\.\\d+\\.\\d+" },
+    ]
+  },
+  {
+    category: "꧁ 其他 ꧂",
+    patterns: [
+        { name: "Email 地址", pattern: "\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*" },
+        { name: "手机号码", pattern: "^(?:(?:\\+|00)86)?(13[0-9]|14[01456789]|15[0-35-9]|17[0-35-8]|18[0-35-9]|19[0-35-9])\\d{8}$" },
+        { name: "身份证号(宽松，15位、18位数字)", pattern: "\\d{15}|\\d{18}" },
+        { name: "帐号是否合法(字母开头，允许5-16字节，允许字母数字下划线)", pattern: "[a-zA-Z][a-zA-Z0-9_]{4,15}" },
+        { name: "密码(以字母开头，长度在6~18之间，只能包含字母、数字和下划线)", pattern: "[a-zA-Z]\\w{5,17}" },
+        { name: "腾讯QQ号", pattern: "[1-9][0-9]{4,}" },
+        { name: "邮政编码（中国）", pattern: "[1-9]\\d{5}(?!\\d)" },
+    ]
+  }
+];
+
+const CheatSheet = ({ onRegexClick }: { onRegexClick: (pattern: string, name: string) => void }) => (
   <Accordion type="single" collapsible className="w-full">
     <AccordionItem value="char-classes">
       <AccordionTrigger>字符类</AccordionTrigger>
@@ -101,6 +176,33 @@ const CheatSheet = () => (
           <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">(?&lt;name&gt;pattern)</code> - 命名分组：给分组命名，便于引用，如 \k&lt;name&gt;。</li>
         </ul>
       </AccordionContent>
+    </AccordionItem>
+    <AccordionItem value="common-patterns">
+        <AccordionTrigger>常用</AccordionTrigger>
+        <AccordionContent>
+            <div className="space-y-4">
+                {commonPatterns.map((group) => (
+                    <div key={group.category}>
+                        <h4 className="mb-2 text-base font-semibold text-foreground">{group.category}</h4>
+                        <div className="space-y-1">
+                            {group.patterns.map((pattern) => (
+                                <div
+                                    key={pattern.name}
+                                    className="flex cursor-pointer items-center justify-between rounded-md p-2 transition-colors hover:bg-muted"
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={() => onRegexClick(pattern.pattern, pattern.name)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onRegexClick(pattern.pattern, pattern.name); }}
+                                >
+                                    <span className="text-sm text-muted-foreground">{pattern.name}</span>
+                                    <code className="font-code rounded bg-background px-2 py-1 text-sm text-accent-foreground">{pattern.pattern}</code>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </AccordionContent>
     </AccordionItem>
   </Accordion>
 );
@@ -195,6 +297,15 @@ export default function RegexPlaygroundPage() {
       description: '文本已复制到您的剪贴板。',
     });
   }, [toast]);
+
+  const handleCommonPatternClick = useCallback((pattern: string, name: string) => {
+    setRegex(pattern);
+    handleCopy(pattern, name);
+    toast({
+        title: '表达式已填充并复制！',
+        description: `已将常用表达式 "${name}" 填入输入框。`,
+    });
+  }, [handleCopy, toast]);
 
   const availableGroupIndices = useMemo(() => {
     if (matches.length === 0) return [];
@@ -385,6 +496,13 @@ export default function RegexPlaygroundPage() {
               </CardHeader>
               <CardContent>
                  <div className="relative h-48 border rounded-md">
+                    <div
+                      ref={scrollSyncRef}
+                      aria-hidden="true"
+                      className="absolute inset-0 m-0 overflow-auto pointer-events-none py-2 px-3 whitespace-pre-wrap font-code text-base md:text-sm leading-relaxed"
+                    >
+                      {highlightedTestString}
+                    </div>
                     <Textarea
                       ref={textareaRef}
                       id="test-string-input"
@@ -402,13 +520,6 @@ export default function RegexPlaygroundPage() {
                       spellCheck="false"
                       aria-label="测试字符串输入"
                     />
-                    <div
-                      ref={scrollSyncRef}
-                      aria-hidden="true"
-                      className="absolute inset-0 m-0 overflow-auto pointer-events-none py-2 px-3 whitespace-pre-wrap font-code text-base md:text-sm leading-relaxed"
-                    >
-                      {highlightedTestString}
-                    </div>
                 </div>
                 <div className="mt-4 flex justify-end">
                   <Button variant="destructive" onClick={() => setTestString('')}>
@@ -556,7 +667,7 @@ export default function RegexPlaygroundPage() {
                     <CardDescription>常用语法的快速参考。</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <CheatSheet />
+                    <CheatSheet onRegexClick={handleCommonPatternClick} />
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -570,14 +681,3 @@ export default function RegexPlaygroundPage() {
     </div>
   );
 }
-
-    
-
-    
-
-
-
-
-
-
-
