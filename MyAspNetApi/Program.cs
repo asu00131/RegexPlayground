@@ -95,7 +95,7 @@ namespace MyAspNetApi
             .WithOpenApi();
 
             // ✅ 监听 0.0.0.0 以便 Firebase Studio 预览端口生效
-            app.Run("http://0.0.0.0:5159");
+            app.Run("http://0.0.0.0:5000");
         }
 
         // ✅ 类型声明必须放在类中
