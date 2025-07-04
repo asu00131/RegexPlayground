@@ -70,6 +70,7 @@ const CheatSheet = () => (
           <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">$</code> - 字符串结尾</li>
           <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">\b</code> - 单词边界</li>
           <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">\B</code> - 非单词边界</li>
+          <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">|</code> - 指明两项之间的一个选择</li>
         </ul>
       </AccordionContent>
     </AccordionItem>
@@ -558,6 +559,7 @@ export default function RegexPlaygroundPage() {
     
 
     
+
 
 
 
