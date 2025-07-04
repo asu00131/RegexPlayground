@@ -30,8 +30,8 @@ const tokenInfo: Record<string, { type: 'char-class' | 'anchor' | 'control-char'
     '.': { type: 'char-class', description: '匹配除换行符以外的任何字符。', label: '任意字符' },
     '^': { type: 'anchor', description: '匹配字符串的开头。', label: '开头' },
     '$': { type: 'anchor', description: '匹配字符串的结尾。', label: '结尾' },
-    '\\b': { type: 'anchor', description: '匹配单词边界。默认情况下，.NET 的 \\w（以及 \\b）是支持 Unicode 的，能够识别多种语言的字母数字字符，而不仅仅是 ASCII。', label: '词边界' },
-    '\\B': { type: 'anchor', description: '匹配非单词边界。同样是 Unicode 感知的。', label: '非词边界' },
+    '\\b': { type: 'anchor', description: '匹配单词边界。默认情况下，.NET 的 \\w（以及 \\b）是支持 Unicode 的，能够识别多种语言的字母数字字符，而不仅仅是 ASCII。', label: '\\b' },
+    '\\B': { type: 'anchor', description: '匹配非单词边界。同样是 Unicode 感知的。', label: '\\B' },
     '\\n': { type: 'control-char', description: '匹配换行符。', label: '换行' },
     '\\r': { type: 'control-char', description: '匹配回车符。', label: '回车' },
     '\\t': { type: 'control-char', description: '匹配制表符。', label: '制表符' },
@@ -303,32 +303,25 @@ const Group = ({ node }: { node: AstNode & { type: 'group' } }) => {
   );
 };
 
-const NodeBox = ({ label, content, description, className, footer }: { label: string; content?: string; description: string; className?: string, footer?: React.ReactNode }) => (
+const NodeBox = ({ label, content, description, className }: { label: string; content?: string; description: string; className?: string }) => (
     <div title={description} className={cn("px-3 py-1.5 border-2 rounded-md text-center shadow-sm min-w-[50px] bg-card flex flex-col", className)}>
         <div className="font-semibold text-card-foreground">{label}</div>
         {content && <div className="text-xs text-muted-foreground font-code mt-0.5">{content}</div>}
-        {footer && <div className="text-xs text-muted-foreground mt-1 pt-1 border-t border-dashed">{footer}</div>}
     </div>
 );
 
 const Terminal = ({ node }: { node: AstNode & { type: 'literal' | 'char-class' | 'anchor' | 'backreference' | 'control-char' } }) => {
     let className = '';
-    let footer = null;
 
     if (node.type === 'char-class') className = 'border-emerald-400';
-    if (node.type === 'anchor') {
-      className = 'border-violet-400';
-      if (node.raw === '\\b' || node.raw === '\\B') {
-        footer = <p className="font-code">.NET: Unicode</p>;
-      }
-    }
+    if (node.type === 'anchor') className = 'border-violet-400';
     if (node.type === 'control-char') className = 'border-fuchsia-400';
     if (node.type === 'literal') className = 'border-sky-400';
     if (node.type === 'backreference') className = 'border-orange-400';
 
     const content = (node.type === 'char-class' && node.content) ? node.content : undefined;
 
-    return <NodeBox label={node.label} content={content} description={node.description} className={className} footer={footer} />;
+    return <NodeBox label={node.label} content={content} description={node.description} className={className} />;
 };
 
 const StartNode = () => (
@@ -400,3 +393,4 @@ const RegexVisualizer = ({ regex }: { regex: string }) => {
 export default RegexVisualizer;
 
     
+

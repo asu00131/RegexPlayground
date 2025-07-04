@@ -46,253 +46,49 @@ interface MatchResult {
   groups: string[];
 }
 
-const commonPatterns = [
-  {
-    category: '数字类',
-    patterns: [
-      { name: '数字', regex: '[0-9]*' },
-      { name: 'n位的数字', regex: '\\d{n}' },
-      { name: '至少n位的数字', regex: '\\d{n,}' },
-      { name: 'm-n位的数字', regex: '\\d{m,n}' },
-      { name: '零和非零开头的数字', regex: '(0|[1-9][0-9]*)' },
-      { name: '非零开头的最多带两位小数的数字', regex: '([1-9][0-9]*)+(\\.[0-9]{1,2})?' },
-      { name: '带1-2位小数的正数或负数', regex: '(-)?\\d+(\\.\\d{1,2})?' },
-      { name: '正数、负数、和小数', regex: '(-|\\+)?\\d+(\\.\\d+)?' },
-      { name: '有两位小数的正实数', regex: '[0-9]+(\\.[0-9]{2})?' },
-      { name: '有1~3位小数的正实数', regex: '[0-9]+(\\.[0-9]{1,3})?' },
-      { name: '非零的正整数', regex: '[1-9]\\d*' },
-      { name: '非零的负整数', regex: '-[1-9]\\d*' },
-      { name: '非负整数', regex: '\\d+' },
-      { name: '非正整数', regex: '-[1-9]\\d*|0' },
-      { name: '非负浮点数', regex: '\\d+(\\.\\d+)?' },
-      { name: '非正浮点数', regex: '((-\\d+(\\.\\d+)?)|(0+(\\.0+)?))' },
-      { name: '正浮点数', regex: '[1-9]\\d*\\.\\d*|0\\.\\d*[1--9]\\d*' },
-      { name: '浮点数（小数）', regex: '(-?\\d+)(\\.\\d+)?' },
-    ],
-  },
-  {
-    category: '字符串',
-    patterns: [
-        { name: '任意字符', regex: '[\\w\\W]+' },
-        { name: '英文和数字', regex: '[A-Za-z0-9]+' },
-        { name: '长度为3-20的所有字符', regex: '.{3,20}' },
-        { name: '由26个英文字母组成的字符串', regex: '[A-Za-z]+' },
-        { name: '由26个大写英文字母组成的字符串', regex: '[A-Z]+' },
-        { name: '由26个小写英文字母组成的字符串', regex: '[a-z]+' },
-        { name: '由数字和26个英文字母组成的字符串', regex: '[A-Za-z0-9]+' },
-        { name: '由数字、26个英文字母或者下划线组成的字符串', regex: '\\w+' },
-        { name: '中文、英文、数字包括下划线', regex: '[\\u4E00-\\u9FA5A-Za-z0-9_]+' },
-        { name: '中文、英文、数字但不包括下划线等符号', regex: '[\\u4E00-\\u9FA5A-Za-z0-9]+' },
-        { name: '可以输入含有^%&\',;=?$\\等字符', regex: "[^%&',;=?$\\\\]+" },
-        { name: '禁止输入含有~的字符', regex: '[^~]+' },
-        { name: '中文字符（宽松）', regex: '[\\u4e00-\\u9fa5]' },
-        { name: '双字节字符', regex: '[^\\x00-\\xff]' },
-    ]
-  },
-  {
-    category: '时间',
-    patterns: [
-      { name: '日期格式（宽松）', regex: '\\d{4}-\\d{1,2}-\\d{1,2}' },
-      { name: '一年的12个月(01～09和1～12)', regex: '(0?[1-9]|1[0-2])' },
-      { name: '一个月的31天(01～09和1～31)', regex: '((0?[1-9])|((1|2)[0-9])|30|31)' },
-      { name: '24小时制时间（HH:mm:ss）', regex: '^(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d$' },
-      { name: '12小时制时间（hh:mm:ss）', regex: '^(?:1[0-2]|0?[1-9]):[0-5]\\d:[0-5]\\d$' },
-    ]
-  },
-  {
-    category: '网络',
-    patterns: [
-      { name: '域名', regex: '[a-zA-Z0-9][-a-zA-Z0-9]{0,62}(/.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})+/.?' },
-      { name: 'InternetURL', regex: '(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]' },
-      { name: 'IPv4（宽松）', regex: '\\d+\\.\\d+\\.\\d+\\.\\d+' },
-    ]
-  },
-  {
-    category: '其他',
-    patterns: [
-      { name: 'Email 地址', regex: '\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*' },
-      { name: '手机号码', regex: '^(?:(?:\\+|00)86)?(13[0-9]|14[01456789]|15[0-35-9]|17[0-35-8]|18[0-35-9]|19[0-35-9])\\d{8}$' },
-      { name: '身份证号(宽松，15位、18位数字)', regex: '\\d{15}|\\d{18}' },
-      { name: '帐号是否合法(字母开头，允许5-16字节，允许字母数字下划线)', regex: '[a-zA-Z][a-zA-Z0-9_]{4,15}' },
-      { name: '密码(以字母开头，长度在6~18之间，只能包含字母、数字和下划线)', regex: '[a-zA-Z]\\w{5,17}' },
-      { name: '腾讯QQ号', regex: '[1-9][0-9]{4,}' },
-      { name: '邮政编码（中国）', regex: '[1-9]\\d{5}(?!\\d)' },
-    ]
-  },
-];
-
 const CheatSheet = () => (
   <Accordion type="single" collapsible className="w-full">
     <AccordionItem value="char-classes">
       <AccordionTrigger>字符类</AccordionTrigger>
       <AccordionContent>
-        <ul className="space-y-4 text-sm">
-          <li>
-            <code className="font-code bg-muted px-1 py-0.5 rounded">.</code>
-            <p className="pl-2 mt-1 text-muted-foreground">匹配除换行符以外的任何单个字符。</p>
-          </li>
-          <li>
-            <code className="font-code bg-muted px-1 py-0.5 rounded">\d</code>
-            <p className="pl-2 mt-1 text-muted-foreground">匹配任何数字 (等同于 <code className="font-code bg-muted/80 px-1 rounded">[0-9]</code>)。</p>
-          </li>
-          <li>
-            <code className="font-code bg-muted px-1 py-0.5 rounded">\D</code>
-            <p className="pl-2 mt-1 text-muted-foreground">匹配任何非数字字符 (等同于 <code className="font-code bg-muted/80 px-1 rounded">[^0-9]</code>)。</p>
-          </li>
-          <li>
-            <code className="font-code bg-muted px-1 py-0.5 rounded">\w</code>
-            <p className="pl-2 mt-1 text-muted-foreground">匹配任何单词字符 (字母、数字和下划线)。在 .NET 中，默认支持 Unicode，能正确匹配大多数语言的字母数字字符。</p>
-          </li>
-          <li>
-            <code className="font-code bg-muted px-1 py-0.5 rounded">\W</code>
-            <p className="pl-2 mt-1 text-muted-foreground">匹配任何非单词字符。</p>
-          </li>
-          <li>
-            <code className="font-code bg-muted px-1 py-0.5 rounded">\s</code>
-            <p className="pl-2 mt-1 text-muted-foreground">匹配任何空白字符 (空格、制表符、换页符等)。</p>
-          </li>
-          <li>
-            <code className="font-code bg-muted px-1 py-0.5 rounded">\S</code>
-            <p className="pl-2 mt-1 text-muted-foreground">匹配任何非空白字符。</p>
-          </li>
+        <ul className="space-y-2 text-sm text-muted-foreground pl-2">
+          <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">.</code> - 任何字符 (换行符除外)</li>
+          <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">\d</code> - 任何数字</li>
+          <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">\D</code> - 任何非数字字符</li>
+          <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">\w</code> - 任何单词字符 (a-z, A-Z, 0-9, _)</li>
+          <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">\W</code> - 任何非单词字符</li>
+          <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">\s</code> - 任何空白字符</li>
+          <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">\S</code> - 任何非空白字符</li>
         </ul>
       </AccordionContent>
     </AccordionItem>
     <AccordionItem value="anchors">
       <AccordionTrigger>锚点</AccordionTrigger>
       <AccordionContent>
-        <ul className="space-y-4 text-sm">
-            <li>
-                <code className="font-code bg-muted px-1 py-0.5 rounded">^</code>
-                <p className="pl-2 mt-1 text-muted-foreground">匹配字符串的开头。</p>
-            </li>
-            <li>
-                <code className="font-code bg-muted px-1 py-0.5 rounded">$</code>
-                <p className="pl-2 mt-1 text-muted-foreground">匹配字符串的结尾。</p>
-            </li>
-            <li>
-                <code className="font-code bg-muted px-1 py-0.5 rounded">\b</code>
-                <p className="pl-2 mt-1 text-muted-foreground">匹配单词边界。默认情况下，.NET 的 <code className="font-code bg-muted/80 px-1 rounded">\w</code>（以及 <code className="font-code bg-muted/80 px-1 rounded">\b</code>）是支持 Unicode 的，能够识别多种语言的字母数字字符，而不仅仅是 ASCII。</p>
-            </li>
-            <li>
-                <code className="font-code bg-muted px-1 py-0.5 rounded">\B</code>
-                <p className="pl-2 mt-1 text-muted-foreground">匹配非单词边界。同样是 Unicode 感知的。</p>
-            </li>
+        <ul className="space-y-2 text-sm text-muted-foreground pl-2">
+          <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">^</code> - 字符串开头</li>
+          <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">$</code> - 字符串结尾</li>
+          <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">\b</code> - 单词边界</li>
+          <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">\B</code> - 非单词边界</li>
         </ul>
       </AccordionContent>
     </AccordionItem>
     <AccordionItem value="quantifiers">
       <AccordionTrigger>量词</AccordionTrigger>
       <AccordionContent>
-         <ul className="space-y-4 text-sm">
-            <li>
-                <code className="font-code bg-muted px-1 py-0.5 rounded">*</code>
-                <p className="pl-2 mt-1 text-muted-foreground">匹配前面的元素零次或多次。</p>
-            </li>
-            <li>
-                <code className="font-code bg-muted px-1 py-0.5 rounded">+</code>
-                <p className="pl-2 mt-1 text-muted-foreground">匹配前面的元素一次或多次。</p>
-            </li>
-            <li>
-                <code className="font-code bg-muted px-1 py-0.5 rounded">?</code>
-                <p className="pl-2 mt-1 text-muted-foreground">匹配前面的元素零次或一次。</p>
-            </li>
-            <li>
-                <code className="font-code bg-muted px-1 py-0.5 rounded">{'{n}'}</code>
-                <p className="pl-2 mt-1 text-muted-foreground">精确匹配前面的元素 n 次。</p>
-            </li>
-            <li>
-                <code className="font-code bg-muted px-1 py-0.5 rounded">{'{n,}'}</code>
-                <p className="pl-2 mt-1 text-muted-foreground">匹配前面的元素至少 n 次。</p>
-            </li>
-            <li>
-                <code className="font-code bg-muted px-1 py-0.5 rounded">{'{n,m}'}</code>
-                <p className="pl-2 mt-1 text-muted-foreground">匹配前面的元素 n 到 m 次。</p>
-            </li>
-            <li className="!mt-6 pt-4 border-t">
-                <p className="font-bold text-base">贪婪与非贪婪</p>
-                <p className="text-muted-foreground">默认情况下，量词是“贪婪的”，会匹配尽可能多的字符。在其后添加 <code className="font-code bg-muted/80 px-1 rounded">?</code> 可使其变为“非贪婪”（或“懒惰的”），从而匹配尽可能少的字符。</p>
-            </li>
+        <ul className="space-y-2 text-sm text-muted-foreground pl-2">
+          <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">*</code> - 0个或多个</li>
+          <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">+</code> - 1个或多个</li>
+          <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">?</code> - 0个或1个</li>
+          <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">{'{n}'}</code> - 正好n次</li>
+          <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">{'{n,}'}</code> - n次或更多次</li>
+          <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">{'{n,m}'}</code> - n到m次之间</li>
         </ul>
-      </AccordionContent>
-    </AccordionItem>
-    <AccordionItem value="groups">
-      <AccordionTrigger>分组和范围</AccordionTrigger>
-      <AccordionContent>
-        <ul className="space-y-4 text-sm">
-            <li>
-                <code className="font-code bg-muted px-1 py-0.5 rounded">(pattern)</code>
-                <p className="pl-2 mt-1 text-muted-foreground">分组并捕获：匹配 'pattern' 并捕获匹配项。可通过 $1, $2 等引用。</p>
-            </li>
-            <li>
-                <code className="font-code bg-muted px-1 py-0.5 rounded">(?:pattern)</code>
-                <p className="pl-2 mt-1 text-muted-foreground">分组但不捕获：当您需要对多个项进行分组但又不想保存匹配项时很有用。</p>
-            </li>
-            <li>
-                <code className="font-code bg-muted px-1 py-0.5 rounded">(?&lt;name&gt;pattern)</code>
-                <p className="pl-2 mt-1 text-muted-foreground">命名捕获分组：捕获 'pattern' 的匹配项，并为其分配一个名称 'name'。</p>
-            </li>
-            <li>
-                <code className="font-code bg-muted px-1 py-0.5 rounded">[abc]</code>
-                <p className="pl-2 mt-1 text-muted-foreground">字符集：匹配 'a', 'b', 或 'c'。</p>
-            </li>
-            <li>
-                <code className="font-code bg-muted px-1 py-0.5 rounded">[^abc]</code>
-                <p className="pl-2 mt-1 text-muted-foreground">排除型字符集：匹配任何非 'a', 'b', 或 'c' 的字符。</p>
-            </li>
-            <li>
-                <code className="font-code bg-muted px-1 py-0.5 rounded">[a-z]</code>
-                <p className="pl-2 mt-1 text-muted-foreground">范围字符集：匹配从 'a' 到 'z' 的任何字符。</p>
-            </li>
-            <li className="!mt-6 pt-4 border-t">
-                <p className="font-bold text-base">断言（零宽度）</p>
-                <p className="text-muted-foreground">它们只断言某个位置是否满足条件，不消耗字符。</p>
-            </li>
-            <li>
-                <code className="font-code bg-muted px-1 py-0.5 rounded">(?=pattern)</code>
-                <p className="pl-2 mt-1 text-muted-foreground">正向先行断言：断言当前位置右侧能匹配 'pattern'。</p>
-            </li>
-            <li>
-                <code className="font-code bg-muted px-1 py-0.5 rounded">(?!pattern)</code>
-                <p className="pl-2 mt-1 text-muted-foreground">负向先行断言：断言当前位置右侧不能匹配 'pattern'。</p>
-            </li>
-            <li>
-                <code className="font-code bg-muted px-1 py-0.5 rounded">(?&lt;=pattern)</code>
-                <p className="pl-2 mt-1 text-muted-foreground">正向后行断言：断言当前位置左侧能匹配 'pattern'。</p>
-            </li>
-            <li>
-                <code className="font-code bg-muted px-1 py-0.5 rounded">(?&lt;!pattern)</code>
-                <p className="pl-2 mt-1 text-muted-foreground">负向后行断言：断言当前位置左侧不能匹配 'pattern'。</p>
-            </li>
-             <li>
-                <code className="font-code bg-muted px-1 py-0.5 rounded">(?&gt;pattern)</code>
-                <p className="pl-2 mt-1 text-muted-foreground">原子分组：匹配 'pattern'，但禁止引擎在该分组内进行回溯。</p>
-            </li>
-        </ul>
-      </AccordionContent>
-    </AccordionItem>
-    <AccordionItem value="common-patterns">
-      <AccordionTrigger>常用模式</AccordionTrigger>
-      <AccordionContent>
-        <div className="space-y-6">
-          {commonPatterns.map(section => (
-            <div key={section.category}>
-              <h4 className="font-bold text-base mb-2 sticky top-0 bg-background/95 backdrop-blur-sm py-2">꧁ {section.category} ꧂</h4>
-              <ul className="space-y-1">
-                {section.patterns.map(p => (
-                  <li key={p.name} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 p-2 rounded-md hover:bg-muted/50" onClick={() => setRegex(p.regex)}>
-                    <span className="text-sm">{p.name}</span>
-                    <code className="font-code bg-muted px-2 py-1 rounded text-sm text-right break-all">{p.regex}</code>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
       </AccordionContent>
     </AccordionItem>
   </Accordion>
 );
+
 
 export default function RegexPlaygroundPage() {
   const { toast } = useToast();
@@ -762,5 +558,6 @@ export default function RegexPlaygroundPage() {
     
 
     
+
 
 
