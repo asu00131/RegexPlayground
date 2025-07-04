@@ -87,6 +87,21 @@ const CheatSheet = () => (
         </ul>
       </AccordionContent>
     </AccordionItem>
+    <AccordionItem value="grouping">
+      <AccordionTrigger>分组 / 断言</AccordionTrigger>
+      <AccordionContent>
+        <ul className="space-y-2 text-sm text-muted-foreground pl-2">
+          <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">(pattern)</code> - 捕获分组：捕获匹配的子串，可通过 $1~$9 或 \1~\9 引用。</li>
+          <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">(?:pattern)</code> - 非捕获分组：分组但不捕获，常用于结构清晰或配合 |。</li>
+          <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">(?=pattern)</code> - 正向预查：匹配后面是 pattern 的位置（不消费字符）。</li>
+          <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">(?!pattern)</code> - 负向预查：匹配后面不是 pattern 的位置（不消费字符）。</li>
+          <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">(?&lt;=pattern)</code> - 正向回顾：匹配前面是 pattern 的位置（不消费字符）。</li>
+          <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">(?&lt;!pattern)</code> - 负向回顾：匹配前面不是 pattern 的位置（不消费字符）。</li>
+          <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">(?&gt;pattern)</code> - 原子分组：禁止回溯的贪婪匹配，提高性能。</li>
+          <li><code className="font-code bg-muted px-1.5 py-0.5 rounded mr-2 text-foreground">(?&lt;name&gt;pattern)</code> - 命名分组：给分组命名，便于引用，如 \k&lt;name&gt;。</li>
+        </ul>
+      </AccordionContent>
+    </AccordionItem>
   </Accordion>
 );
 
@@ -370,13 +385,6 @@ export default function RegexPlaygroundPage() {
               </CardHeader>
               <CardContent>
                  <div className="relative h-48 border rounded-md">
-                    <div
-                      ref={scrollSyncRef}
-                      aria-hidden="true"
-                      className="absolute inset-0 m-0 overflow-auto pointer-events-none py-2 px-3 whitespace-pre-wrap font-code text-base md:text-sm leading-relaxed"
-                    >
-                      {highlightedTestString}
-                    </div>
                     <Textarea
                       ref={textareaRef}
                       id="test-string-input"
@@ -394,6 +402,13 @@ export default function RegexPlaygroundPage() {
                       spellCheck="false"
                       aria-label="测试字符串输入"
                     />
+                    <div
+                      ref={scrollSyncRef}
+                      aria-hidden="true"
+                      className="absolute inset-0 m-0 overflow-auto pointer-events-none py-2 px-3 whitespace-pre-wrap font-code text-base md:text-sm leading-relaxed"
+                    >
+                      {highlightedTestString}
+                    </div>
                 </div>
                 <div className="mt-4 flex justify-end">
                   <Button variant="destructive" onClick={() => setTestString('')}>
@@ -559,6 +574,7 @@ export default function RegexPlaygroundPage() {
     
 
     
+
 
 
 
