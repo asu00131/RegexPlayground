@@ -39,7 +39,7 @@ import {
 import RegexVisualizer from '@/components/regex-visualizer';
 
 // --- C# Backend API Configuration ---
-const API_BASE_URL = 'http://localhost:5159';
+const API_BASE_URL = 'http://localhost:5000';
 
 interface MatchResult {
   index: number;
@@ -66,7 +66,7 @@ const commonPatterns = [
       { name: '非正整数', regex: '-[1-9]\\d*|0' },
       { name: '非负浮点数', regex: '\\d+(\\.\\d+)?' },
       { name: '非正浮点数', regex: '((-\\d+(\\.\\d+)?)|(0+(\\.0+)?))' },
-      { name: '正浮点数', regex: '[1-9]\\d*\\.\\d*|0\\.\\d*[1-9]\\d*' },
+      { name: '正浮点数', regex: '[1-9]\\d*\\.\\d*|0\\.\\d*[1--9]\\d*' },
       { name: '浮点数（小数）', regex: '(-?\\d+)(\\.\\d+)?' },
     ],
   },
@@ -83,7 +83,7 @@ const commonPatterns = [
         { name: '由数字、26个英文字母或者下划线组成的字符串', regex: '\\w+' },
         { name: '中文、英文、数字包括下划线', regex: '[\\u4E00-\\u9FA5A-Za-z0-9_]+' },
         { name: '中文、英文、数字但不包括下划线等符号', regex: '[\\u4E00-\\u9FA5A-Za-z0-9]+' },
-        { name: "可以输入含有^%&',;=?$\\等字符", regex: "[^%&',;=?$\\\\]+" },
+        { name: '可以输入含有^%&\',;=?$\\等字符', regex: "[^%&',;=?$\\\\]+" },
         { name: '禁止输入含有~的字符', regex: '[^~]+' },
         { name: '中文字符（宽松）', regex: '[\\u4e00-\\u9fa5]' },
         { name: '双字节字符', regex: '[^\\x00-\\xff]' },
