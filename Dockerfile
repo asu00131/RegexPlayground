@@ -1,23 +1,27 @@
-# 使用 SDK 镜像进行构建
+# STAGE 1: Build Environment
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# 拷贝项目文件并还原依赖项
-COPY *.csproj ./
-RUN dotnet restore
+# Copy the project file and restore dependencies first.
+# This leverages Docker's layer caching to speed up future builds.
+COPY ["MyAspNetApi/MyAspNetApi.csproj", "MyAspNetApi/"]
+RUN dotnet restore "MyAspNetApi/MyAspNetApi.csproj"
 
-# 拷贝所有源代码并发布
-COPY . ./
-RUN dotnet publish -c Release -o /app/publish
+# Copy the rest of the source code
+COPY . .
+WORKDIR "/src/MyAspNetApi"
 
-# 使用运行时镜像构建最终镜像
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+# Publish the application for release.
+RUN dotnet publish "MyAspNetApi.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+
+# STAGE 2: Runtime Environment
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 COPY --from=build /app/publish .
 
-# 设置监听端口（Render 默认监听 10000）
-ENV ASPNETCORE_URLS=http://+:10000
-EXPOSE 10000
+# Expose the port the app runs on. Render will use this to route traffic.
+EXPOSE 5000
 
+# Set the entrypoint to run the application.
 ENTRYPOINT ["dotnet", "MyAspNetApi.dll"]
-
