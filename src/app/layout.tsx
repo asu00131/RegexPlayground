@@ -25,11 +25,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
+    <html lang="zh-CN" className={cn(fontSans.variable, fontMono.variable)} suppressHydrationWarning>
       <body className={cn(
-        "min-h-screen bg-background font-sans antialiased",
-        fontSans.variable,
-        fontMono.variable
+        "min-h-screen bg-background font-sans antialiased"
       )}>
         {children}
         <Toaster />
