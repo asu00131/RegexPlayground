@@ -405,7 +405,7 @@ export default function RegexPlaygroundPage() {
           if (segment.type === 'text') {
             currentLine.push(<Fragment key={keyCounter++}>{part}</Fragment>);
           } else {
-            currentLine.push(<mark key={keyCounter++} className="bg-accent/40 text-accent-foreground rounded-sm">{part}</mark>);
+            currentLine.push(<mark key={keyCounter++} className="bg-highlight text-highlight-foreground rounded-sm">{part}</mark>);
           }
         }
         if (i < subSegments.length - 1) {
