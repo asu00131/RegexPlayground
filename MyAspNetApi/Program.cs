@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 
 var builder = WebApplication.CreateBuilder(args);
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -10,15 +11,15 @@ builder.Services.AddSwaggerGen();
 // Add CORS services
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
-        builder =>
-        {
-            // In a production app, you'd want to restrict this to your frontend's origin
-            builder.AllowAnyOrigin()
-                   .AllowAnyMethod()
-                   .AllowAnyHeader();
-        });
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+                      policy =>
+                      {
+                          policy.WithOrigins("http://localhost:9002") // The frontend origin
+                                .AllowAnyHeader()
+                                .AllowAnyMethod();
+                      });
 });
+
 
 var app = builder.Build();
 
@@ -30,7 +31,7 @@ if (app.Environment.IsDevelopment())
 }
 
 // Use CORS
-app.UseCors("AllowAll");
+app.UseCors(MyAllowSpecificOrigins);
 
 // Define request and response records
 record RegexRequest(string Regex, string TestString, string ReplacementString, bool IgnoreCase, bool Multiline, bool GlobalSearch);
