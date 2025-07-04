@@ -361,7 +361,7 @@ export default function RegexPlaygroundPage() {
           setRegexError(null);
         }
       } catch (e: any) {
-        setRegexError(`连接后端失败: ${e.message}。请确保 ASP.NET 服务正在运行，并且没有被防火墙或其它程序阻止。`);
+        setRegexError(`连接后端失败: ${e.message}。请检查浏览器开发者工具中的“网络”选项卡，查看请求详情，并确认 ASP.NET 服务正在运行。`);
         setMatches([]);
         setReplacementResult('后端处理错误');
       } finally {
