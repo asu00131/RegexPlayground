@@ -39,7 +39,7 @@ import {
 import RegexVisualizer from '@/components/regex-visualizer';
 
 // --- C# Backend API Configuration ---
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'http://localhost:5159';
 
 interface MatchResult {
   index: number;
@@ -759,5 +759,7 @@ export default function RegexPlaygroundPage() {
     </div>
   );
 }
+
+    
 
     
