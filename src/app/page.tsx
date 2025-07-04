@@ -172,7 +172,7 @@ const CheatSheet = () => (
             </li>
             <li>
                 <code className="font-code bg-muted px-1 py-0.5 rounded">\b</code>
-                <p className="pl-2 mt-1 text-muted-foreground">匹配单词边界。在 .NET 正则表达式引擎中，`\b` 是 Unicode 感知的，能够正确处理如中文等非 ASCII 字符的边界。</p>
+                <p className="pl-2 mt-1 text-muted-foreground">匹配单词边界。默认情况下，.NET 的 <code className="font-code bg-muted/80 px-1 rounded">\w</code>（以及 <code className="font-code bg-muted/80 px-1 rounded">\b</code>）是支持 Unicode 的，能够识别多种语言的字母数字字符，而不仅仅是 ASCII。</p>
             </li>
             <li>
                 <code className="font-code bg-muted px-1 py-0.5 rounded">\B</code>
@@ -518,7 +518,6 @@ export default function RegexPlaygroundPage() {
         <Card className="border-t-4 border-primary">
           <CardHeader>
             <CardTitle className="font-bold">表达式可视化</CardTitle>
-            <CardDescription>正则表达式的图形化表示 (.NET 语法)。</CardDescription>
           </CardHeader>
           <CardContent>
             <RegexVisualizer regex={regex} />
@@ -763,4 +762,5 @@ export default function RegexPlaygroundPage() {
     
 
     
+
 

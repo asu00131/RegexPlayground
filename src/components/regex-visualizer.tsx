@@ -30,7 +30,7 @@ const tokenInfo: Record<string, { type: 'char-class' | 'anchor' | 'control-char'
     '.': { type: 'char-class', description: '匹配除换行符以外的任何字符。', label: '任意字符' },
     '^': { type: 'anchor', description: '匹配字符串的开头。', label: '开头' },
     '$': { type: 'anchor', description: '匹配字符串的结尾。', label: '结尾' },
-    '\\b': { type: 'anchor', description: '匹配单词边界。在 .NET 中，此断言是 Unicode 感知的，能够正确识别多种语言（包括中文）的单词边界。', label: '词边界' },
+    '\\b': { type: 'anchor', description: '匹配单词边界。默认情况下，.NET 的 \\w（以及 \\b）是支持 Unicode 的，能够识别多种语言的字母数字字符，而不仅仅是 ASCII。', label: '词边界' },
     '\\B': { type: 'anchor', description: '匹配非单词边界。同样是 Unicode 感知的。', label: '非词边界' },
     '\\n': { type: 'control-char', description: '匹配换行符。', label: '换行' },
     '\\r': { type: 'control-char', description: '匹配回车符。', label: '回车' },
