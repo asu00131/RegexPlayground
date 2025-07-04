@@ -38,6 +38,14 @@ import {
 } from 'lucide-react';
 import RegexVisualizer from '@/components/regex-visualizer';
 
+// --- C# Backend API Configuration ---
+const API_BASE_URL = 'http://localhost:5159';
+
+interface MatchResult {
+  index: number;
+  groups: string[];
+}
+
 const commonPatterns = [
   {
     category: '数字类',
@@ -60,7 +68,6 @@ const commonPatterns = [
       { name: '非正浮点数', regex: '((-\\d+(\\.\\d+)?)|(0+(\\.0+)?))' },
       { name: '正浮点数', regex: '[1-9]\\d*\\.\\d*|0\\.\\d*[1-9]\\d*' },
       { name: '浮点数（小数）', regex: '(-?\\d+)(\\.\\d+)?' },
-      { name: '浮点数（严格）', regex: '^(-?[1-9]\\d*\\.\\d+|-?0\\.\\d*[1-9])$' },
     ],
   },
   {
@@ -79,40 +86,17 @@ const commonPatterns = [
         { name: "可以输入含有^%&',;=?$\\等字符", regex: "[^%&',;=?$\\\\]+" },
         { name: '禁止输入含有~的字符', regex: '[^~]+' },
         { name: '中文字符（宽松）', regex: '[\\u4e00-\\u9fa5]' },
-        { name: '中文汉字（严谨）', regex: '^(?:[\\u3400-\\u4DB5\\u4E00-\\u9FEA\\uFA0E\\uFA0F\\uFA11\\uFA13\\uFA14\\uFA1F\\uFA21\\uFA23\\uFA24\\uFA27-\\uFA29]|[\\uD840-\\uD868\\uD86A-\\uD86C\\uD86F-\\uD872\\uD874-\\uD879][\\uDC00-\\uDFFF]|\\uD869[\\uDC00-\\uDED6\\uDF00-\\uDFFF]|\\uD86D[\\uDC00-\\uDF34\\uDF40-\\uDFFF]|\\uD86E[\\uDC00-\\uDC1D\\uDC20-\\uDFFF]|\\uD873[\\uDC00-\\uDEA1\\uDEB0-\\uDFFF]|\\uD87A[\\uDC00-\\uDFE0])+$' },
-        { name: '中文汉字 + 中文标点', regex: '[\\u4e00-\\u9fa5|\\u3002|\\uff1f|\\uff01|\\uff0c|\\u3001|\\uff1b|\\uff1a|\\u201c|\\u201d|\\u2018|\\u2019|\\uff08|\\uff09|\\u300a|\\u300b|\\u3008|\\u3009|\\u3010|\\u3011|\\u300e|\\u300f|\\u300c|\\u300d|\\ufe43|\\ufe44|\\u3014|\\u3015|\\u2026|\\u2014|\\uff5e|\\ufe4f|\\uffe5]' },
-        { name: '日文字符', regex: '[\\u3040-\\u309f]' },
         { name: '双字节字符', regex: '[^\\x00-\\xff]' },
-        { name: '数字/货币金额', regex: '(?:^[-]?[1-9]\\d{0,2}(?:$|(?:,\\d{3})*(?:$|(\\.\\d{1,2}$))))|(?:(?:^[0](\\.\\d{1,2})?)|(?:^[-][0]\\.\\d{1,2}))$' },
     ]
   },
   {
     category: '时间',
     patterns: [
       { name: '日期格式（宽松）', regex: '\\d{4}-\\d{1,2}-\\d{1,2}' },
-      { name: '日期格式', regex: '^\\d{4}(-)(1[0-2]|0?\\d)\\1([0-2]\\d|\\d|30|31)$' },
-      { name: '日期格式（严谨，支持闰年）', regex: '^(([0-9]{3}[1-9]|[0-9]{2}[1-9][0-9]{1}|[0-9]{1}[1-9][0-9]{2}|[1-9][0-9]{3})-(((0[13578]|1[02])-(0[1-9]|[12][0-9]|3[01]))|((0[469]|11)-(0[1-9]|[12][0-9]|30))|(02-(0[1-9]|[1][0-9]|2[0-8]))))|((([0-9]{2})(0[48]|[2468][048]|[13579][26])|((0[48]|[2468][048]|[3579][26])00))-02-29)$' },
       { name: '一年的12个月(01～09和1～12)', regex: '(0?[1-9]|1[0-2])' },
       { name: '一个月的31天(01～09和1～31)', regex: '((0?[1-9])|((1|2)[0-9])|30|31)' },
-      { name: '简单的日期判断（YYYY/MM/DD）', regex: '\\d{4}(\\-|\\/|\\.)\\d{1,2}\\1\\d{1,2}' },
       { name: '24小时制时间（HH:mm:ss）', regex: '^(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d$' },
       { name: '12小时制时间（hh:mm:ss）', regex: '^(?:1[0-2]|0?[1-9]):[0-5]\\d:[0-5]\\d$' },
-      { name: '中国省份', regex: '^浙江|上海|北京|天津|重庆|黑龙江|吉林|辽宁|内蒙古|河北|新疆|甘肃|青海|陕西|宁夏|河南|山东|山西|安徽|湖北|湖南|江苏|四川|贵州|云南|广西|西藏|江西|广东|福建|台湾|海南|香港|澳门$' },
-    ]
-  },
-  {
-    category: '颜色',
-    patterns: [
-      { name: '16进制颜色', regex: '^#?([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$' },
-      { name: 'RGB颜色代码', regex: '[rR][gG][Bb][(]((2[0-4][0-9]|25[0-5]|[01]?[0-9][0-9]?),){2}(2[0-4]\\d|25[0-5]|[01]?\\d\\d?)[)]{1}' },
-    ]
-  },
-  {
-    category: '标签',
-    patterns: [
-      { name: 'XML文件', regex: '([a-zA-Z]+-?)+[a-zA-Z0-9]+\\.[x|X][m|M][l|L]' },
-      { name: 'HTML标记', regex: '<(\\S*?)[^>]*>.*?</\\1>|<.*? />' },
-      { name: 'HTML注释', regex: '^<!--[\\s\\S]*?-->$' },
     ]
   },
   {
@@ -120,15 +104,7 @@ const commonPatterns = [
     patterns: [
       { name: '域名', regex: '[a-zA-Z0-9][-a-zA-Z0-9]{0,62}(/.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})+/.?' },
       { name: 'InternetURL', regex: '(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]' },
-      { name: '迅雷链接', regex: '^thunder://[a-zA-Z0-9]+=$' },
-      { name: '磁力链接(宽松匹配)', regex: '^magnet:\\?xt=urn:btih:[0-9a-fA-F]{40,}.*$' },
       { name: 'IPv4（宽松）', regex: '\\d+\\.\\d+\\.\\d+\\.\\d+' },
-      { name: 'IPv4', regex: '((?:(?:25[0-5]|2[0-4]\\d|[01]?\\d?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|[01]?\\d?\\d))' },
-      { name: 'IPv6', regex: '^((([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){6}:[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){5}:([0-9A-Fa-f]{1,4}:)?[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){4}:([0-9A-Fa-f]{1,4}:){0,2}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){3}:([0-9A-Fa-f]{1,4}:){0,3}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){2}:([0-9A-Fa-f]{1,4}:){0,4}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){6}((\\b((25[0-5])|(1\\d{2})|(2[0-4]\\d)|(\\d{1,2}))\\b)\\.){3}(\\b((25[0-5])|(1\\d{2})|(2[0-4]\\d)|(\\d{1,2}))\\b))|(([0-9A-Fa-f]{1,4}:){0,5}:((\\b((25[0-5])|(1\\d{2})|(2[0-4]\\d)|(\\d{1,2}))\\b)\\.){3}(\\b((25[0-5])|(1\\d{2})|(2[0-4]\\d)|(\\d{1,2}))\\b))|(::([0-9A-Fa-f]{1,4}:){0,5}((\\b((25[0-5])|(1\\d{2})|(2[0-4]\\d)|(\\d{1,2}))\\b)\\.){3}(\\b((25[0-5])|(1\\d{2})|(2[0-4]\\d)|(\\d{1,2}))\\b))|([0-9A-Fa-f]{1,4}::([0-9A-Fa-f]{1,4}:){0,5}[0-9A-Fa-f]{1,4})|(::([0-9A-Fa-f]{1,4}:){0,6}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){1,7}:))$' },
-      { name: '子网掩码（不含0.0.0.0）', regex: '^(?:\\d{1,2}|1\\d\\d|2[0-4]\\d|25[0-5])(?:\\.(?:\\d{1,2}|1\\d\\d|2[0-4]\\d|25[0-5])){3}$' },
-      { name: 'MAC地址', regex: '^((([a-f0-9]{2}:){5})|(([a-f0-9]{2}-){5}))[a-f0-9]{2}$' },
-      { name: '视频链接地址', regex: '^https?://.*?(?:swf|avi|flv|mpg|rm|mov|wav|asf|3gp|mkv|rmvb|mp4)$' },
-      { name: '图片链接地址', regex: '^https?://.*?(?:gif|png|jpg|jpeg|webp|svg|psd|bmp|tif)$' },
     ]
   },
   {
@@ -136,34 +112,11 @@ const commonPatterns = [
     patterns: [
       { name: 'Email 地址', regex: '\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*' },
       { name: '手机号码', regex: '^(?:(?:\\+|00)86)?(13[0-9]|14[01456789]|15[0-35-9]|17[0-35-8]|18[0-35-9]|19[0-35-9])\\d{8}$' },
-      { name: '手机机身码(IMEI)', regex: '^\\d{15,17}' },
-      { name: '固定电话号码（中国）', regex: '^(?:(?:\\d{3}-)?\\d{8}|^(?:\\d{4}-)?\\d{7,8})(?:-\\d+)?$' },
       { name: '身份证号(宽松，15位、18位数字)', regex: '\\d{15}|\\d{18}' },
-      { name: '1代身份证号（15位）', regex: '^[1-9]\\d{7}(?:0\\d|10|11|12)(?:0[1-9]|[1-2][\\d]|30|31)\\d{3}$' },
-      { name: '2代身份证号（18位）', regex: '^[1-9]\\d{5}(?:18|19|20)\\d{2}(?:0[1-9]|10|11|12)(?:0[1-9]|[1-2]\\d|30|31)\\d{3}[\\dXx]$' },
-      { name: '中国身份证号（严谨，支持1/2代）', regex: '^\\d{6}((((((19|20)\\d{2})(0[13-9]|1[012])(0[1-9]|[12]\\d|30))|(((19|20)\\d{2})(0[13578]|1[02])31)|((19|20)\\d{2})02(0[1-9]|1\\d|2[0-8])|((((19|20)([13579][26]|[2468][048]|0[48]))|(2000))0229))\\d{3})|((((\\d{2})(0[13-9]|1[012])(0[1-9]|[12]\\d|30))|((\\d{2})(0[13578]|1[02])31)|((\\d{2})02(0[1-9]|1\\d|2[0-8]))|(([13579][26]|[2468][048]|0[048])0229))\\d{2}))(\\d|X|x)$' },
-      { name: '护照ID（包含香港、澳门）', regex: '(^[EeKkGgDdSsPpHh]\\d{8}$)|(^(([Ee][a-fA-F])|([DdSsPp][Ee])|([Kk][Jj])|([Mm][Aa])|(1[45]))\\d{7}$)' },
-      { name: '香港身份证号', regex: '^[a-zA-Z]\\d{6}\\([\\dA]\\)$' },
-      { name: '澳门身份证号', regex: '^[1|5|7]\\d{6}\\(\\d\\)$' },
-      { name: '台湾身份证号', regex: '^[a-zA-Z][0-9]{9}$' },
       { name: '帐号是否合法(字母开头，允许5-16字节，允许字母数字下划线)', regex: '[a-zA-Z][a-zA-Z0-9_]{4,15}' },
       { name: '密码(以字母开头，长度在6~18之间，只能包含字母、数字和下划线)', regex: '[a-zA-Z]\\w{5,17}' },
-      { name: '强密码(必须包含大小写字母和数字的组合，不能使用特殊字符，长度在8-10之间)', regex: '(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{8,10}' },
-      { name: '密码强度校验（最少6位，至少包含1个大写字母、1个小写字母、1个数字、1个特殊字符）', regex: '^\\S*(?=\\S{6,})(?=\\S*\\d)(?=\\S*[A-Z])(?=\\S*[a-z])(?=\\S*[!@#$%^&*? ])\\S*$' },
-      { name: '首尾空白字符', regex: '^\\s*|\\s*$' },
       { name: '腾讯QQ号', regex: '[1-9][0-9]{4,}' },
       { name: '邮政编码（中国）', regex: '[1-9]\\d{5}(?!\\d)' },
-      { name: 'A股代码', regex: '^(s[hz]|S[HZ])(000[\\d]{3}|002[\\d]{3}|300[\\d]{3}|600[\\d]{3}|60[\\d]{4})$' },
-      { name: 'md5格式(32位)', regex: '^[a-fA-F0-9]{32}' },
-      { name: '版本号（X.Y.Z）', regex: '^\\d+(?:\\.\\d+){2}$' },
-      { name: 'base64格式', regex: '^\\s*data:(?:[a-z]+\\/[a-z0-9-+.]+(?:;[a-z-]+=[a-z0-9-]+)?)?(?:;base64)?,([a-z0-9!$&\'()*+;=\\-.\\_~:@/?%\\s,]*?)\\s*$' },
-      { name: '银行卡号（宽松，16位或19位）', regex: '^(?:[1-9]{1})(?:\\d{15}|\\d{18})$' },
-      { name: '车牌号(新能源+非新能源)', regex: '^(?:[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领 A-Z]{1}[A-HJ-NP-Z]{1}(?:(?:[0-9]{5}[DF])|(?:[DF](?:[A-HJ-NP-Z0-9])[0-9]{4})))|(?:[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领 A-Z]{1}[A-Z]{1}[A-HJ-NP-Z0-9]{4}[A-HJ-NP-Z0-9 挂学警港澳]{1})$' },
-      { name: '新能源车牌号', regex: '[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领 A-Z]{1}[A-HJ-NP-Z]{1}(([0-9]{5}[DF])|([DF][A-HJ-NP-Z0-9][0-9]{4}))$' },
-      { name: '非新能源车牌号', regex: '^[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领 A-Z]{1}[A-HJ-NP-Z]{1}[A-Z0-9]{4}[A-Z0-9挂学警港澳]{1}$' },
-      { name: '国内火车车次', regex: '^[GCDZTSPKXLY1-9]\\d{1,4}$' },
-      { name: '统一社会信用代码', regex: '^[0-9A-HJ-NPQRTUWXY]{2}\\d{6}[0-9A-HJ-NPQRTUWXY]{10}$' },
-      { name: 'GUID/UUID', regex: '^[a-f\\d]{4}(?:[a-f\\d]{4}-){4}[a-f\\d]{12}$' },
     ]
   },
 ];
@@ -188,11 +141,11 @@ const CheatSheet = () => (
           </li>
           <li>
             <code className="font-code bg-muted px-1 py-0.5 rounded">\w</code>
-            <p className="pl-2 mt-1 text-muted-foreground">匹配任何单词字符 (字母、数字和下划线，等同于 <code className="font-code bg-muted/80 px-1 rounded">[A-Za-z0-9_]</code>)。启用Unicode模式后，可匹配大多数语言的字母数字字符。</p>
+            <p className="pl-2 mt-1 text-muted-foreground">匹配任何单词字符 (字母、数字和下划线)。在 .NET 中，默认支持 Unicode，能正确匹配大多数语言的字母数字字符。</p>
           </li>
           <li>
             <code className="font-code bg-muted px-1 py-0.5 rounded">\W</code>
-            <p className="pl-2 mt-1 text-muted-foreground">匹配任何非单词字符 (等同于 <code className="font-code bg-muted/80 px-1 rounded">[^A-Za-z0-9_]</code>)。</p>
+            <p className="pl-2 mt-1 text-muted-foreground">匹配任何非单词字符。</p>
           </li>
           <li>
             <code className="font-code bg-muted px-1 py-0.5 rounded">\s</code>
@@ -219,11 +172,11 @@ const CheatSheet = () => (
             </li>
             <li>
                 <code className="font-code bg-muted px-1 py-0.5 rounded">\b</code>
-                <p className="pl-2 mt-1 text-muted-foreground">匹配 Unicode 单词边界。为了提供更强大的跨语言支持（如正确处理中文分词），本工具会自动将 <code className="font-code bg-muted/80 px-1 rounded">\b</code> 转换为更精确的 Unicode 感知表达式进行匹配。单词字符被定义为任何语言的字母、数字以及下划线。</p>
+                <p className="pl-2 mt-1 text-muted-foreground">匹配单词边界。在 .NET 正则表达式引擎中，`\b` 是 Unicode 感知的，能够正确处理如中文等非 ASCII 字符的边界。</p>
             </li>
             <li>
                 <code className="font-code bg-muted px-1 py-0.5 rounded">\B</code>
-                <p className="pl-2 mt-1 text-muted-foreground">匹配非 Unicode 单词边界。与 <code className="font-code bg-muted/80 px-1 rounded">\b</code> 类似，本工具会将其转换为 Unicode 感知的表达式。</p>
+                <p className="pl-2 mt-1 text-muted-foreground">匹配非单词边界。同样是 Unicode 感知的。</p>
             </li>
         </ul>
       </AccordionContent>
@@ -273,7 +226,7 @@ const CheatSheet = () => (
             </li>
             <li>
                 <code className="font-code bg-muted px-1 py-0.5 rounded">(?:pattern)</code>
-                <p className="pl-2 mt-1 text-muted-foreground">分组但不捕获：当您需要对多个项进行分组但又不想保存匹配项时很有用。例如，`industr(?:y|ies)` 比 `industry|industries` 更高效。</p>
+                <p className="pl-2 mt-1 text-muted-foreground">分组但不捕获：当您需要对多个项进行分组但又不想保存匹配项时很有用。</p>
             </li>
             <li>
                 <code className="font-code bg-muted px-1 py-0.5 rounded">(?&lt;name&gt;pattern)</code>
@@ -327,7 +280,7 @@ const CheatSheet = () => (
               <h4 className="font-bold text-base mb-2 sticky top-0 bg-background/95 backdrop-blur-sm py-2">꧁ {section.category} ꧂</h4>
               <ul className="space-y-1">
                 {section.patterns.map(p => (
-                  <li key={p.name} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 p-2 rounded-md hover:bg-muted/50">
+                  <li key={p.name} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 p-2 rounded-md hover:bg-muted/50" onClick={() => setRegex(p.regex)}>
                     <span className="text-sm">{p.name}</span>
                     <code className="font-code bg-muted px-2 py-1 rounded text-sm text-right break-all">{p.regex}</code>
                   </li>
@@ -344,7 +297,7 @@ const CheatSheet = () => (
 export default function RegexPlaygroundPage() {
   const { toast } = useToast();
   const [regex, setRegex] = useState('((?<!库存)\\b\\d{4,5})');
-  const [testString, setTestString] = useState('颜色01kc金黄色耳钉10313￥5.23库存8604对02KC金白色耳钉6389￥5.23库存8415对03KC金蓝色耳钉10312￥5.51库存8091对04KC金粉色耳钉6749￥5.23库存8632对05KC金黄色耳环6746￥5.23库存8665对06KC金白色耳环6722￥5.23库存8603对07黄色2对￥10.26库存8690对08·白色2对￥10.26库存8690对09KC金4786￥3.04库存6494对白色H-237￥5.13库存77对KC金·8657￥5.32库存119对KC金·A-1084￥3.99库存70对三角形藤编·10008￥5.13库存991对圆形藤编·10002￥5.13库存995对海星贝壳藤编·8933￥5.13库存983对贝壳藤编·8715￥5.13库存983对藤编米色·6257￥4.75库存992对藤编棕色·6724￥4.75库存990对藤编米色·11269￥4.75库存993对藤编米色·1119￥4.75库存981对藤编米色·4981￥4.75库存990对藤编米色1966￥4.75库存990对藤编咖色9947￥3.61库存978对藤编咖色·0022￥3.33库存987对藤编米色DZ-167￥6.27库存989对KC金S363（布）￥2.76库存9624对');
+  const [testString, setTestString] = useState('颜色01kc金黄色耳钉10313￥5.23库存8604对02KC金白色耳钉6389￥5.23库存8415对03KC金蓝色耳钉10312￥5.51库存8091对04KC金粉色耳钉6749￥5.23库存8632对05KC金黄色耳环6746￥5.23库存8665对06KC金白色耳环6722￥5.23库存8603对07黄色2对￥10.26库存8690对08·白色2对￥10.26库存8690对09KC金4786￥3.04库存6494对白色H-237￥5.13库存77对KC金·8657￥5.32库存119对KC金·A-1084￥3.99库存70对三角形藤编·10008￥5.13库存991对圆形藤编·10002￥5.13库存995对海星贝壳藤编·8933￥5.13库存983对贝壳藤编·8715￥5.13库存983对藤编米色·6257￥4.75库存992对藤编棕色·6724￥4.75库存990对藤编米色·11269￥4.75库存993对藤编米色·1119￥4.75库存981对藤编米色·4981￥4.75库存990对藤编米色1966￥4.75库存990对藤编咖色9947￥3.61库存978对藤编米色·9831￥3.8库存989对藤编咖色·0022￥3.33库存987对藤编米色DZ-167￥6.27库存989对KC金S363（布）￥2.76库存9624对');
   const [replacementString, setReplacementString] = useState('【$1】-【$2】');
   
   const [globalSearch, setGlobalSearch] = useState(true);
@@ -353,23 +306,75 @@ export default function RegexPlaygroundPage() {
   
   const [regexError, setRegexError] = useState<string | null>(null);
   const [isInsertingSample, setIsInsertingSample] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  const [matches, setMatches] = useState<MatchResult[]>([]);
+  const [replacementResult, setReplacementResult] = useState('');
 
   const scrollSyncRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    try {
-      // Add 'u' flag for validation to support Unicode property escapes
-      const flags = `gimu`;
-      const processedRegex = regex
-        .replace(/\\b/g, "(?:(?<=(?:\\p{L}|\\p{N}|_))(?!(?:\\p{L}|\\p{N}|_))|(?<!(?:\\p{L}|\\p{N}|_))(?=(?:\\p{L}|\\p{N}|_)))")
-        .replace(/\\B/g, "(?:(?<=(?:\\p{L}|\\p{N}|_))(?=(?:\\p{L}|\\p{N}|_))|(?<!(?:\\p{L}|\\p{N}|_))(?!(?:\\p{L}|\\p{N}|_)))");
-      new RegExp(processedRegex, flags);
-      setRegexError(null);
-    } catch (e: any) {
-      setRegexError(e.message);
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
     }
-  }, [regex]);
+    setIsLoading(true);
+    setRegexError(null);
+
+    debounceTimeoutRef.current = setTimeout(async () => {
+      if (!regex) {
+        setMatches([]);
+        setReplacementResult(testString);
+        setIsLoading(false);
+        return;
+      }
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/regex/process`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            regex,
+            testString,
+            replacementString,
+            globalSearch,
+            ignoreCase,
+            multiline,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`API 请求失败: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.error) {
+          setRegexError(result.error);
+          setMatches([]);
+          setReplacementResult('无效的正则表达式');
+        } else {
+          setMatches(result.matches || []);
+          setReplacementResult(result.replacementResult || '');
+          setRegexError(null);
+        }
+      } catch (e: any) {
+        setRegexError(`连接后端失败: ${e.message}`);
+        setMatches([]);
+        setReplacementResult('后端处理错误');
+      } finally {
+        setIsLoading(false);
+      }
+    }, 500); // 500ms debounce delay
+
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, [regex, testString, replacementString, globalSearch, ignoreCase, multiline]);
 
   const handleCopy = useCallback((text: string, subject: string) => {
     navigator.clipboard.writeText(text);
@@ -379,41 +384,13 @@ export default function RegexPlaygroundPage() {
     });
   }, [toast]);
 
-  const { matches, replacementResult } = useMemo(() => {
-    if (regexError) {
-      return { matches: [], replacementResult: '无效的正则表达式' };
-    }
-    try {
-      // To simulate C#-like Unicode-aware word boundaries, we must use the 'u' flag
-      // and replace \b and \B with lookarounds based on Unicode properties.
-      const b_replacement = "(?:(?<=(?:\\p{L}|\\p{N}|_))(?!(?:\\p{L}|\\p{N}|_))|(?<!(?:\\p{L}|\\p{N}|_))(?=(?:\\p{L}|\\p{N}|_)))";
-      const B_replacement = "(?:(?<=(?:\\p{L}|\\p{N}|_))(?=(?:\\p{L}|\\p{N}|_))|(?<!(?:\\p{L}|\\p{N}|_))(?!(?:\\p{L}|\\p{N}|_)))";
-
-      const processedRegex = regex
-        .replace(/\\b/g, b_replacement)
-        .replace(/\\B/g, B_replacement);
-        
-      // Add 'u' flag for Unicode property escapes (\p) and proper Unicode matching.
-      const flags = `${globalSearch ? 'g' : ''}${ignoreCase ? 'i' : ''}${multiline ? 'm' : ''}u`;
-      const re = new RegExp(processedRegex, flags);
-      
-      const currentMatches = globalSearch ? [...testString.matchAll(re)] : (testString.match(re) ? [testString.match(re)!] : []);
-      const currentReplacementResult = testString.replace(re, replacementString);
-
-      return { matches: currentMatches, replacementResult: currentReplacementResult };
-    } catch (e) {
-      // This case should be covered by useEffect, but as a fallback:
-      return { matches: [], replacementResult: '无效的正则表达式' };
-    }
-  }, [regex, testString, replacementString, globalSearch, ignoreCase, multiline, regexError]);
-
   const availableGroupIndices = useMemo(() => {
     if (matches.length === 0) return [];
     const allIndices = new Set<number>();
     matches.forEach(match => {
-        if (match.length > 1) {
-            for (let i = 1; i < match.length; i++) {
-                if (match[i] !== undefined) {
+        if (match.groups.length > 1) {
+            for (let i = 1; i < match.groups.length; i++) {
+                if (match.groups[i] !== undefined) {
                     allIndices.add(i);
                 }
             }
@@ -424,20 +401,20 @@ export default function RegexPlaygroundPage() {
 
   const handleCopyAllMatches = useCallback(() => {
     if (matches.length === 0) return;
-    const allMatchesText = matches.map(match => match[0]).join('\n');
+    const allMatchesText = matches.map(match => match.groups[0]).join('\n');
     handleCopy(allMatchesText, '所有匹配结果');
   }, [matches, handleCopy]);
 
-  const handleCopyAllGroups = useCallback((match: RegExpMatchArray, matchIndex: number) => {
-    if (match.length <= 1) return;
-    const allGroupsText = [...match].slice(1).filter(g => g !== undefined).join('\n');
+  const handleCopyAllGroups = useCallback((match: MatchResult, matchIndex: number) => {
+    if (match.groups.length <= 1) return;
+    const allGroupsText = match.groups.slice(1).filter(g => g !== undefined).join('\n');
     handleCopy(allGroupsText, `匹配 ${matchIndex + 1} 的所有分组`);
   }, [handleCopy]);
 
   const handleCopyAllOfOneGroup = useCallback((groupIndex: number) => {
     if (matches.length === 0) return;
     const groupNText = matches
-        .map(match => match[groupIndex])
+        .map(match => match.groups[groupIndex])
         .filter(g => g !== undefined)
         .join('\n');
     handleCopy(groupNText, `所有匹配中的分组 ${groupIndex} 的内容`);
@@ -483,13 +460,14 @@ export default function RegexPlaygroundPage() {
     const segments: { type: 'text' | 'mark'; content: string }[] = [];
     let lastIndex = 0;
     matches.forEach((match) => {
-      const startIndex = match.index!;
-      const matchText = match[0];
+      if (match.index === -1) return; // Should not happen with successful matches
+      const startIndex = match.index;
+      const matchText = match.groups[0];
       if (startIndex > lastIndex) {
         segments.push({ type: 'text', content: testString.substring(lastIndex, startIndex) });
       }
       segments.push({ type: 'mark', content: matchText });
-      lastIndex = startIndex + matchText.length;
+      lastIndex = startIndex + (matchText?.length || 0);
     });
     if (lastIndex < testString.length) {
       segments.push({ type: 'text', content: testString.substring(lastIndex) });
@@ -532,15 +510,15 @@ export default function RegexPlaygroundPage() {
       <header className="border-b sticky top-0 bg-background/95 backdrop-blur z-10">
         <div className="container mx-auto px-4 py-3">
           <h1 className="text-2xl font-bold font-headline">正则表达式乐园</h1>
-          <p className="text-muted-foreground text-sm">在线测试和调试正则表达式。</p>
+          <p className="text-muted-foreground text-sm">在线测试和调试正则表达式 (.NET 引擎)。</p>
         </div>
       </header>
 
       <main className="flex-grow container mx-auto p-4 flex flex-col gap-6">
-        <Card className="border-t-4 border-destructive">
+        <Card className="border-t-4 border-primary">
           <CardHeader>
             <CardTitle className="font-bold">表达式可视化</CardTitle>
-            <CardDescription>正则表达式的图形化表示。</CardDescription>
+            <CardDescription>正则表达式的图形化表示 (.NET 语法)。</CardDescription>
           </CardHeader>
           <CardContent>
             <RegexVisualizer regex={regex} />
@@ -554,7 +532,7 @@ export default function RegexPlaygroundPage() {
                 <CardTitle className="font-bold">正则表达式</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-start gap-4 bg-muted/50 rounded-md p-2">
+                <div className="flex items-start gap-4 bg-muted/50 rounded-md p-2 relative">
                   <span className="text-muted-foreground font-code text-lg mt-2">/</span>
                   <Textarea
                     id="regex-input"
@@ -566,20 +544,21 @@ export default function RegexPlaygroundPage() {
                     aria-label="正则表达式输入"
                   />
                   <span className="text-muted-foreground font-code text-lg mt-2">/</span>
+                   {isLoading && <div className="absolute inset-0 bg-background/50 flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>}
                 </div>
                  {regexError && <p className="mt-2 text-destructive-foreground bg-destructive/80 p-2 rounded-md text-sm flex items-center gap-2"><AlertCircle size={16} /> {regexError}</p>}
                 <div className="flex items-center space-x-4 mt-4 flex-wrap gap-y-2">
                   <div className="flex items-center space-x-2">
                     <Switch id="global" checked={globalSearch} onCheckedChange={setGlobalSearch} />
-                    <Label htmlFor="global">全局 (g)</Label>
+                    <Label htmlFor="global">全局匹配</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Switch id="ignoreCase" checked={ignoreCase} onCheckedChange={setIgnoreCase} />
-                    <Label htmlFor="ignoreCase">忽略大小写 (i)</Label>
+                    <Label htmlFor="ignoreCase">忽略大小写</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Switch id="multiline" checked={multiline} onCheckedChange={setMultiline} />
-                    <Label htmlFor="multiline">多行 (m)</Label>
+                    <Label htmlFor="multiline">多行模式</Label>
                   </div>
                 </div>
               </CardContent>
@@ -713,14 +692,14 @@ export default function RegexPlaygroundPage() {
                             <CardContent className="space-y-4 pt-2">
                               <div className="flex items-center justify-between text-sm font-code gap-2 bg-background p-1.5 rounded-md border">
                                   <span className="font-semibold text-muted-foreground">完整匹配:</span>
-                                  <pre className="flex-grow overflow-x-auto mr-2">{match[0]}</pre>
-                                  <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => handleCopy(match[0], `完整匹配 ${index + 1}`)}>
+                                  <pre className="flex-grow overflow-x-auto mr-2">{match.groups[0]}</pre>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => handleCopy(match.groups[0], `完整匹配 ${index + 1}`)}>
                                     <ClipboardCopy className="h-4 w-4" />
                                     <span className="sr-only">复制完整匹配</span>
                                   </Button>
                               </div>
                               
-                              {match.length > 1 && [...match].slice(1).some(g => g !== undefined) ? (
+                              {match.groups.length > 1 && match.groups.slice(1).some(g => g !== undefined) ? (
                                 <div>
                                   <div className="flex items-center justify-between mb-2">
                                     <p className="text-sm font-medium">捕获分组：</p>
@@ -735,7 +714,7 @@ export default function RegexPlaygroundPage() {
                                     </Button>
                                   </div>
                                   <div className="space-y-1">
-                                    {[...match].slice(1).map((group, groupIndex) => (
+                                    {match.groups.slice(1).map((group, groupIndex) => (
                                       group !== undefined && <div key={groupIndex} className="flex items-center justify-between text-sm font-code gap-2 bg-background p-1.5 rounded-md border">
                                           <span className="text-muted-foreground">${groupIndex + 1}:</span>
                                           <pre className="flex-grow overflow-x-auto mr-2">{group}</pre>
@@ -775,8 +754,10 @@ export default function RegexPlaygroundPage() {
         </div>
       </main>
       <footer className="text-center p-4 text-muted-foreground text-sm border-t">
-        <p>由 Next.js 和 Genkit 驱动</p>
+        <p>由 Next.js, Genkit, 和 .NET 驱动</p>
       </footer>
     </div>
   );
 }
+
+    

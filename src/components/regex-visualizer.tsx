@@ -23,15 +23,15 @@ type AstNode =
 const tokenInfo: Record<string, { type: 'char-class' | 'anchor' | 'control-char', description: string, label: string }> = {
     '\\d': { type: 'char-class', description: '匹配任何数字 (0-9)。', label: '数字' },
     '\\D': { type: 'char-class', description: '匹配任何非数字字符。', label: '非数字' },
-    '\\w': { type: 'char-class', description: '匹配任何单词字符（字母数字和下划线）。启用Unicode模式后，可匹配大多数语言的字母数字字符。', label: '单词字符' },
+    '\\w': { type: 'char-class', description: '匹配任何单词字符（字母数字和下划线）。在 .NET 中，默认支持 Unicode，能正确匹配大多数语言的字母数字字符。', label: '单词字符' },
     '\\W': { type: 'char-class', description: '匹配任何非单词字符。', label: '非单词字符' },
     '\\s': { type: 'char-class', description: '匹配任何空白字符。', label: '空白' },
     '\\S': { type: 'char-class', description: '匹配任何非空白字符。', label: '非空白' },
     '.': { type: 'char-class', description: '匹配除换行符以外的任何字符。', label: '任意字符' },
     '^': { type: 'anchor', description: '匹配字符串的开头。', label: '开头' },
     '$': { type: 'anchor', description: '匹配字符串的结尾。', label: '结尾' },
-    '\\b': { type: 'anchor', description: '匹配 Unicode 单词边界。在后台，此工具会将其转换为能正确处理中文等非-ASCII 字符的表达式。单词字符包括任何语言的字母、数字及下划线。', label: '词边界' },
-    '\\B': { type: 'anchor', description: '匹配非 Unicode 单词边界。在后台，此工具会将其转换为能正确处理中文等非-ASCII 字符的表达式。', label: '非词边界' },
+    '\\b': { type: 'anchor', description: '匹配单词边界。在 .NET 中，此断言是 Unicode 感知的，能够正确识别多种语言（包括中文）的单词边界。', label: '词边界' },
+    '\\B': { type: 'anchor', description: '匹配非单词边界。同样是 Unicode 感知的。', label: '非词边界' },
     '\\n': { type: 'control-char', description: '匹配换行符。', label: '换行' },
     '\\r': { type: 'control-char', description: '匹配回车符。', label: '回车' },
     '\\t': { type: 'control-char', description: '匹配制表符。', label: '制表符' },
@@ -43,13 +43,14 @@ const tokenInfo: Record<string, { type: 'char-class' | 'anchor' | 'control-char'
 function parse(regex: string): { ast: AstNode | null, error: string | null } {
     if (!regex) return { ast: null, error: '请输入正则表达式' };
     try {
-        // Use 'u' flag for validation to support Unicode features in regex
-        new RegExp(regex, 'u');
+        // Use a simple check, actual validation is done by the .NET backend
     } catch (e: any) {
         return { ast: null, error: e.message };
     }
 
-    const tokens = regex.match(/\\[1-9]\d*|\\.|[+*?](?:\?)?|\{\d+,?\d*\}|\[\^?.*?\]|\(\?[:=!<]|\(|\)|\||\^|\$|\.|[^\\()\[\].+*?{}^$|]+/g) || [];
+    // This tokenizer is simplified and may not cover all edge cases of .NET regex,
+    // but it's sufficient for visualizing common patterns.
+    const tokens = regex.match(/\\u[0-9a-fA-F]{4}|\\x[0-9a-fA-F]{2}|\\[1-9]\d*|\\.|[+*?](?:\?)?|\{\d+,?\d*\}|\[\^?.*?\]|\(\?[<]?[!:=]|\(|\)|\||\^|\$|\.|[^\\()\[\].+*?{}^$|]+/g) || [];
     let position = 0;
     let groupIndex = 1;
 
@@ -101,6 +102,9 @@ function parse(regex: string): { ast: AstNode | null, error: string | null } {
               label = '正向后行断言';
             } else if (token === '(?<!') {
               label = '负向后行断言';
+            } else if (token.startsWith('(?<')) {
+              capturing = true;
+              label = '命名捕获分组';
             }
 
 
@@ -132,14 +136,6 @@ function parse(regex: string): { ast: AstNode | null, error: string | null } {
         }
 
         if (token && token.startsWith('[') && token.endsWith(']')) {
-            // HACK: Handle common inverted classes explicitly for better visualization
-            if (token === '[^\\n]') {
-                return { type: 'char-class', raw: token, description: '匹配除换行符以外的任何字符。', label: '非换行符' };
-            }
-            if (token === '[^\\r\\n]') {
-                return { type: 'char-class', raw: token, description: '匹配除换行或回车以外的任何字符。', label: '非换行/回车' };
-            }
-
             const inverted = token.startsWith('[^');
             const content = token.substring(inverted ? 2 : 1, token.length - 1);
             let description = '';
@@ -150,14 +146,6 @@ function parse(regex: string): { ast: AstNode | null, error: string | null } {
                 'A-Z': {label: '大写字母', desc: '匹配任意大写字母 A 到 Z。'},
                 '0-9': {label: '数字', desc: '匹配任意数字 0 到 9。'},
                 'a-zA-Z0-9_': {label: '单词字符', desc: '匹配任何单词字符（字母数字和下划线）。'},
-                '\\w\\W': {label: '任意字符', desc: '匹配任意字符，包括换行符。'},
-                '\\w': {label: '单词字符', desc: '匹配任何单词字符（字母数字和下划线）。'},
-                '\\W': {label: '非单词字符', desc: '匹配任何非单词字符。'},
-                '\\d': {label: '数字', desc: '匹配任何数字 (0-9)。'},
-                '\\D': {label: '非数字', desc: '匹配任何非数字字符。'},
-                '\\s': {label: '空白', desc: '匹配任何空白字符。'},
-                '\\S': {label: '非空白', desc: '匹配任何非空白字符。'},
-                '\\W_': {label: '特殊字符', desc: '匹配一个非单词字符或下划线 (等同于非字母数字)。'},
             }
             if(commonRanges[content]) {
                 label = commonRanges[content].label;
@@ -216,7 +204,7 @@ const NodeComponent = ({ node }: { node: AstNode }) => {
   }
 };
 
-const Path = ({className}: {className?: string}) => <div className={cn("w-6 h-0.5 bg-destructive", className)} />;
+const Path = ({className}: {className?: string}) => <div className={cn("w-6 h-0.5 bg-primary", className)} />;
 
 const Sequence = ({ parts }: { parts: AstNode[] }) => (
   <div className="flex items-center">
@@ -232,9 +220,9 @@ const Sequence = ({ parts }: { parts: AstNode[] }) => (
 const Choice = ({ options }: { options: AstNode[] }) => (
   <div className="inline-flex flex-col items-center">
     {/* Entry branch point */}
-    <div className="w-0.5 h-2 bg-destructive" />
+    <div className="w-0.5 h-2 bg-primary" />
 
-    <div className="flex flex-col border-x-2 border-destructive rounded-lg">
+    <div className="flex flex-col border-x-2 border-primary rounded-lg">
       {options.map((option, index) => (
         <React.Fragment key={index}>
           <div className="flex items-center px-4 py-2">
@@ -243,7 +231,7 @@ const Choice = ({ options }: { options: AstNode[] }) => (
             <Path />
           </div>
           {index < options.length - 1 && (
-             <div className="h-0.5 w-full bg-destructive relative">
+             <div className="h-0.5 w-full bg-primary relative">
                 <span className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-1 text-xs text-muted-foreground">或</span>
              </div>
           )}
@@ -252,7 +240,7 @@ const Choice = ({ options }: { options: AstNode[] }) => (
     </div>
     
     {/* Exit branch point */}
-    <div className="w-0.5 h-2 bg-destructive" />
+    <div className="w-0.5 h-2 bg-primary" />
   </div>
 );
 
@@ -288,13 +276,13 @@ const Quantifier = ({ node }: { node: AstNode & { type: 'quantifier' } }) => {
         <NodeComponent node={node.content} />
         {hasBypass && (
           <div className="absolute top-0 left-0 right-0 h-4" aria-hidden="true">
-            <div className="w-full h-full border-t-2 border-x-2 border-destructive rounded-t-md" />
+            <div className="w-full h-full border-t-2 border-x-2 border-primary rounded-t-md" />
           </div>
         )}
         {hasLoop && (
           <div className="absolute bottom-0 left-0 right-0 h-4" aria-hidden="true">
-            <div className={cn("w-full h-full border-b-2 border-x-2 border-destructive rounded-b-md flex items-center", !node.greedy && "border-dashed")}>
-              <div className="w-0 h-0 border-t-[4px] border-t-transparent border-r-[5px] border-r-destructive border-b-[4px] border-b-transparent ml-2"></div>
+            <div className={cn("w-full h-full border-b-2 border-x-2 border-primary rounded-b-md flex items-center", !node.greedy && "border-dashed")}>
+              <div className="w-0 h-0 border-t-[4px] border-t-transparent border-r-[5px] border-r-primary border-b-[4px] border-b-transparent ml-2"></div>
             </div>
           </div>
         )}
@@ -315,24 +303,32 @@ const Group = ({ node }: { node: AstNode & { type: 'group' } }) => {
   );
 };
 
-const NodeBox = ({ label, content, description, className }: { label: string; content?: string; description: string; className?: string }) => (
-    <div title={description} className={cn("px-3 py-1.5 border-2 rounded-md text-center shadow-sm min-w-[50px] bg-card", className)}>
+const NodeBox = ({ label, content, description, className, footer }: { label: string; content?: string; description: string; className?: string, footer?: React.ReactNode }) => (
+    <div title={description} className={cn("px-3 py-1.5 border-2 rounded-md text-center shadow-sm min-w-[50px] bg-card flex flex-col", className)}>
         <div className="font-semibold text-card-foreground">{label}</div>
         {content && <div className="text-xs text-muted-foreground font-code mt-0.5">{content}</div>}
+        {footer && <div className="text-xs text-muted-foreground mt-1 pt-1 border-t border-dashed">{footer}</div>}
     </div>
 );
 
 const Terminal = ({ node }: { node: AstNode & { type: 'literal' | 'char-class' | 'anchor' | 'backreference' | 'control-char' } }) => {
     let className = '';
+    let footer = null;
+
     if (node.type === 'char-class') className = 'border-emerald-400';
-    if (node.type === 'anchor') className = 'border-violet-400';
+    if (node.type === 'anchor') {
+      className = 'border-violet-400';
+      if (node.raw === '\\b' || node.raw === '\\B') {
+        footer = <p className="font-code">.NET: Unicode</p>;
+      }
+    }
     if (node.type === 'control-char') className = 'border-fuchsia-400';
     if (node.type === 'literal') className = 'border-sky-400';
     if (node.type === 'backreference') className = 'border-orange-400';
 
     const content = (node.type === 'char-class' && node.content) ? node.content : undefined;
 
-    return <NodeBox label={node.label} content={content} description={node.description} className={className} />;
+    return <NodeBox label={node.label} content={content} description={node.description} className={className} footer={footer} />;
 };
 
 const StartNode = () => (
@@ -402,3 +398,5 @@ const RegexVisualizer = ({ regex }: { regex: string }) => {
 };
 
 export default RegexVisualizer;
+
+    

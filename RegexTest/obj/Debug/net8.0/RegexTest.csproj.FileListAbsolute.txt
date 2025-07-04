@@ -1,0 +1,15 @@
+/home/user/studio/RegexTest/bin/Debug/net8.0/RegexTest
+/home/user/studio/RegexTest/bin/Debug/net8.0/RegexTest.deps.json
+/home/user/studio/RegexTest/bin/Debug/net8.0/RegexTest.runtimeconfig.json
+/home/user/studio/RegexTest/bin/Debug/net8.0/RegexTest.dll
+/home/user/studio/RegexTest/bin/Debug/net8.0/RegexTest.pdb
+/home/user/studio/RegexTest/obj/Debug/net8.0/RegexTest.GeneratedMSBuildEditorConfig.editorconfig
+/home/user/studio/RegexTest/obj/Debug/net8.0/RegexTest.AssemblyInfoInputs.cache
+/home/user/studio/RegexTest/obj/Debug/net8.0/RegexTest.AssemblyInfo.cs
+/home/user/studio/RegexTest/obj/Debug/net8.0/RegexTest.csproj.CoreCompileInputs.cache
+/home/user/studio/RegexTest/obj/Debug/net8.0/RegexTest.sourcelink.json
+/home/user/studio/RegexTest/obj/Debug/net8.0/RegexTest.dll
+/home/user/studio/RegexTest/obj/Debug/net8.0/refint/RegexTest.dll
+/home/user/studio/RegexTest/obj/Debug/net8.0/RegexTest.pdb
+/home/user/studio/RegexTest/obj/Debug/net8.0/RegexTest.genruntimeconfig.cache
+/home/user/studio/RegexTest/obj/Debug/net8.0/ref/RegexTest.dll

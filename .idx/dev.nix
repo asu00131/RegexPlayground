@@ -7,6 +7,7 @@
   packages = [
     pkgs.nodejs_20
     pkgs.zulu
+    pkgs.dotnet-sdk  # 添加这一行以启用 .NET 7 SDK
   ];
   # Sets environment variables in the workspace
   env = {};
@@ -21,6 +22,7 @@
     # Search for the extensions you want on https://open-vsx.org/ and use "publisher.id"
     extensions = [
       # "vscodevim.vim"
+      # 可选：添加 C# 支持的扩展，如 "ms-dotnettools.csharp"
     ];
     workspace = {
       onCreate = {
