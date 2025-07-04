@@ -370,13 +370,6 @@ export default function RegexPlaygroundPage() {
               </CardHeader>
               <CardContent>
                  <div className="relative h-48 border rounded-md">
-                    <div
-                      ref={scrollSyncRef}
-                      aria-hidden="true"
-                      className="absolute inset-0 m-0 overflow-auto pointer-events-none py-2 px-3 whitespace-pre-wrap font-code text-base md:text-sm leading-relaxed"
-                    >
-                      {highlightedTestString}
-                    </div>
                     <Textarea
                       ref={textareaRef}
                       id="test-string-input"
@@ -394,6 +387,13 @@ export default function RegexPlaygroundPage() {
                       spellCheck="false"
                       aria-label="测试字符串输入"
                     />
+                    <div
+                      ref={scrollSyncRef}
+                      aria-hidden="true"
+                      className="absolute inset-0 m-0 overflow-auto pointer-events-none py-2 px-3 whitespace-pre-wrap font-code text-base md:text-sm leading-relaxed"
+                    >
+                      {highlightedTestString}
+                    </div>
                 </div>
                 <div className="mt-4 flex justify-end">
                   <Button variant="destructive" onClick={() => setTestString('')}>
@@ -559,6 +559,7 @@ export default function RegexPlaygroundPage() {
     
 
     
+
 
 
 
