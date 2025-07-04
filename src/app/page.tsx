@@ -76,7 +76,7 @@ const commonPatterns = [
         { name: '由数字、26个英文字母或者下划线组成的字符串', regex: '\\w+' },
         { name: '中文、英文、数字包括下划线', regex: '[\\u4E00-\\u9FA5A-Za-z0-9_]+' },
         { name: '中文、英文、数字但不包括下划线等符号', regex: '[\\u4E00-\\u9FA5A-Za-z0-9]+' },
-        { name: "可以输入含有^%&\\',;=?$\\等字符", regex: "[\\^%&',;=?$\\\\]+" },
+        { name: "可以输入含有^%&',;=?$\\等字符", regex: "[^%&',;=?$\\\\]+" },
         { name: '禁止输入含有~的字符', regex: '[^~]+' },
         { name: '中文字符（宽松）', regex: '[\\u4e00-\\u9fa5]' },
         { name: '中文汉字（严谨）', regex: '^(?:[\\u3400-\\u4DB5\\u4E00-\\u9FEA\\uFA0E\\uFA0F\\uFA11\\uFA13\\uFA14\\uFA1F\\uFA21\\uFA23\\uFA24\\uFA27-\\uFA29]|[\\uD840-\\uD868\\uD86A-\\uD86C\\uD86F-\\uD872\\uD874-\\uD879][\\uDC00-\\uDFFF]|\\uD869[\\uDC00-\\uDED6\\uDF00-\\uDFFF]|\\uD86D[\\uDC00-\\uDF34\\uDF40-\\uDFFF]|\\uD86E[\\uDC00-\\uDC1D\\uDC20-\\uDFFF]|\\uD873[\\uDC00-\\uDEA1\\uDEB0-\\uDFFF]|\\uD87A[\\uDC00-\\uDFE0])+$' },
@@ -188,7 +188,7 @@ const CheatSheet = () => (
           </li>
           <li>
             <code className="font-code bg-muted px-1 py-0.5 rounded">\w</code>
-            <p className="pl-2 mt-1 text-muted-foreground">匹配任何单词字符 (字母、数字和下划线，等同于 <code className="font-code bg-muted/80 px-1 rounded">[A-Za-z0-9_]</code>)。</p>
+            <p className="pl-2 mt-1 text-muted-foreground">匹配任何单词字符 (字母、数字和下划线，等同于 <code className="font-code bg-muted/80 px-1 rounded">[A-Za-z0-9_]</code>)。启用Unicode模式后，可匹配大多数语言的字母数字字符。</p>
           </li>
           <li>
             <code className="font-code bg-muted px-1 py-0.5 rounded">\W</code>
@@ -219,11 +219,11 @@ const CheatSheet = () => (
             </li>
             <li>
                 <code className="font-code bg-muted px-1 py-0.5 rounded">\b</code>
-                <p className="pl-2 mt-1 text-muted-foreground">匹配单词边界。单词被视为由单词字符 <code className="font-code bg-muted/80 px-1 rounded">[A-Za-z0-9_]</code> 组成的序列。此定义在处理非 ASCII 字符（如中文）时可能与预期不符。</p>
+                <p className="pl-2 mt-1 text-muted-foreground">匹配 Unicode 单词边界。为了提供更强大的跨语言支持（如正确处理中文分词），本工具会自动将 <code className="font-code bg-muted/80 px-1 rounded">\b</code> 转换为更精确的 Unicode 感知表达式进行匹配。单词字符被定义为任何语言的字母、数字以及下划线。</p>
             </li>
             <li>
                 <code className="font-code bg-muted px-1 py-0.5 rounded">\B</code>
-                <p className="pl-2 mt-1 text-muted-foreground">匹配非单词边界。</p>
+                <p className="pl-2 mt-1 text-muted-foreground">匹配非 Unicode 单词边界。与 <code className="font-code bg-muted/80 px-1 rounded">\b</code> 类似，本工具会将其转换为 Unicode 感知的表达式。</p>
             </li>
         </ul>
       </AccordionContent>
@@ -343,8 +343,8 @@ const CheatSheet = () => (
 
 export default function RegexPlaygroundPage() {
   const { toast } = useToast();
-  const [regex, setRegex] = useState('([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})|<(div|p|b|i).*?>([\\s\\S]*?)<\\/\\3>|1[3-9]\\d{9}');
-  const [testString, setTestString] = useState('My email is example@domain.com, but not fake@domain.\nThis is a <b>bold</b> tag and this is a <div><p>italic</p></div> one.\nPhone numbers: 13912345678, 18687654321.\nInvalid phone: 12011112222.');
+  const [regex, setRegex] = useState('((?<!库存)\\b\\d{4,5})');
+  const [testString, setTestString] = useState('颜色01kc金黄色耳钉10313￥5.23库存8604对02KC金白色耳钉6389￥5.23库存8415对03KC金蓝色耳钉10312￥5.51库存8091对04KC金粉色耳钉6749￥5.23库存8632对05KC金黄色耳环6746￥5.23库存8665对06KC金白色耳环6722￥5.23库存8603对07黄色2对￥10.26库存8690对08·白色2对￥10.26库存8690对09KC金4786￥3.04库存6494对白色H-237￥5.13库存77对KC金·8657￥5.32库存119对KC金·A-1084￥3.99库存70对三角形藤编·10008￥5.13库存991对圆形藤编·10002￥5.13库存995对海星贝壳藤编·8933￥5.13库存983对贝壳藤编·8715￥5.13库存983对藤编米色·6257￥4.75库存992对藤编棕色·6724￥4.75库存990对藤编米色·11269￥4.75库存993对藤编米色·1119￥4.75库存981对藤编米色·4981￥4.75库存990对藤编米色1966￥4.75库存990对藤编咖色9947￥3.61库存978对藤编咖色·0022￥3.33库存987对藤编米色DZ-167￥6.27库存989对KC金S363（布）￥2.76库存9624对');
   const [replacementString, setReplacementString] = useState('【$1】-【$2】');
   
   const [globalSearch, setGlobalSearch] = useState(true);
@@ -359,7 +359,12 @@ export default function RegexPlaygroundPage() {
 
   useEffect(() => {
     try {
-      new RegExp(regex);
+      // Add 'u' flag for validation to support Unicode property escapes
+      const flags = `gimu`;
+      const processedRegex = regex
+        .replace(/\\b/g, "(?:(?<=(?:\\p{L}|\\p{N}|_))(?!(?:\\p{L}|\\p{N}|_))|(?<!(?:\\p{L}|\\p{N}|_))(?=(?:\\p{L}|\\p{N}|_)))")
+        .replace(/\\B/g, "(?:(?<=(?:\\p{L}|\\p{N}|_))(?=(?:\\p{L}|\\p{N}|_))|(?<!(?:\\p{L}|\\p{N}|_))(?!(?:\\p{L}|\\p{N}|_)))");
+      new RegExp(processedRegex, flags);
       setRegexError(null);
     } catch (e: any) {
       setRegexError(e.message);
@@ -379,15 +384,25 @@ export default function RegexPlaygroundPage() {
       return { matches: [], replacementResult: '无效的正则表达式' };
     }
     try {
-      const flags = `${globalSearch ? 'g' : ''}${ignoreCase ? 'i' : ''}${multiline ? 'm' : ''}`;
-      const re = new RegExp(regex, flags);
+      // To simulate C#-like Unicode-aware word boundaries, we must use the 'u' flag
+      // and replace \b and \B with lookarounds based on Unicode properties.
+      const b_replacement = "(?:(?<=(?:\\p{L}|\\p{N}|_))(?!(?:\\p{L}|\\p{N}|_))|(?<!(?:\\p{L}|\\p{N}|_))(?=(?:\\p{L}|\\p{N}|_)))";
+      const B_replacement = "(?:(?<=(?:\\p{L}|\\p{N}|_))(?=(?:\\p{L}|\\p{N}|_))|(?<!(?:\\p{L}|\\p{N}|_))(?!(?:\\p{L}|\\p{N}|_)))";
+
+      const processedRegex = regex
+        .replace(/\\b/g, b_replacement)
+        .replace(/\\B/g, B_replacement);
+        
+      // Add 'u' flag for Unicode property escapes (\p) and proper Unicode matching.
+      const flags = `${globalSearch ? 'g' : ''}${ignoreCase ? 'i' : ''}${multiline ? 'm' : ''}u`;
+      const re = new RegExp(processedRegex, flags);
       
       const currentMatches = globalSearch ? [...testString.matchAll(re)] : (testString.match(re) ? [testString.match(re)!] : []);
       const currentReplacementResult = testString.replace(re, replacementString);
 
       return { matches: currentMatches, replacementResult: currentReplacementResult };
     } catch (e) {
-      // 此情况应由useEffect覆盖，但作为备用方案：
+      // This case should be covered by useEffect, but as a fallback:
       return { matches: [], replacementResult: '无效的正则表达式' };
     }
   }, [regex, testString, replacementString, globalSearch, ignoreCase, multiline, regexError]);

@@ -23,15 +23,15 @@ type AstNode =
 const tokenInfo: Record<string, { type: 'char-class' | 'anchor' | 'control-char', description: string, label: string }> = {
     '\\d': { type: 'char-class', description: '匹配任何数字 (0-9)。', label: '数字' },
     '\\D': { type: 'char-class', description: '匹配任何非数字字符。', label: '非数字' },
-    '\\w': { type: 'char-class', description: '匹配任何单词字符（字母数字和下划线）。', label: '单词字符' },
+    '\\w': { type: 'char-class', description: '匹配任何单词字符（字母数字和下划线）。启用Unicode模式后，可匹配大多数语言的字母数字字符。', label: '单词字符' },
     '\\W': { type: 'char-class', description: '匹配任何非单词字符。', label: '非单词字符' },
     '\\s': { type: 'char-class', description: '匹配任何空白字符。', label: '空白' },
     '\\S': { type: 'char-class', description: '匹配任何非空白字符。', label: '非空白' },
     '.': { type: 'char-class', description: '匹配除换行符以外的任何字符。', label: '任意字符' },
     '^': { type: 'anchor', description: '匹配字符串的开头。', label: '开头' },
     '$': { type: 'anchor', description: '匹配字符串的结尾。', label: '结尾' },
-    '\\b': { type: 'anchor', description: '匹配单词边界。单词字符定义为 [A-Za-z0-9_]，这在处理非 ASCII 字符时可能与预期不符。', label: '词边界' },
-    '\\B': { type: 'anchor', description: '匹配非单词边界。', label: '非词边界' },
+    '\\b': { type: 'anchor', description: '匹配 Unicode 单词边界。在后台，此工具会将其转换为能正确处理中文等非-ASCII 字符的表达式。单词字符包括任何语言的字母、数字及下划线。', label: '词边界' },
+    '\\B': { type: 'anchor', description: '匹配非 Unicode 单词边界。在后台，此工具会将其转换为能正确处理中文等非-ASCII 字符的表达式。', label: '非词边界' },
     '\\n': { type: 'control-char', description: '匹配换行符。', label: '换行' },
     '\\r': { type: 'control-char', description: '匹配回车符。', label: '回车' },
     '\\t': { type: 'control-char', description: '匹配制表符。', label: '制表符' },
@@ -43,7 +43,8 @@ const tokenInfo: Record<string, { type: 'char-class' | 'anchor' | 'control-char'
 function parse(regex: string): { ast: AstNode | null, error: string | null } {
     if (!regex) return { ast: null, error: '请输入正则表达式' };
     try {
-        new RegExp(regex);
+        // Use 'u' flag for validation to support Unicode features in regex
+        new RegExp(regex, 'u');
     } catch (e: any) {
         return { ast: null, error: e.message };
     }
