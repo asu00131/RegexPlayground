@@ -246,48 +246,54 @@ const Choice = ({ options }: { options: AstNode[] }) => (
 
 const Quantifier = ({ node }: { node: AstNode & { type: 'quantifier' } }) => {
   let text = '';
-  switch(node.kind) {
-      case '*': text = '0 或更多次'; break;
-      case '+': text = '1 或 更多次'; break;
-      case '?': text = '0 或 1 次'; break;
-      default:
-        if (node.kind.startsWith('{')) {
-            const range = node.kind.slice(1, -1);
-            const [min, max] = range.split(',');
+  let min: number = -1;
+  let max: number | 'infinity' = -1;
 
-            if (max === undefined) { // {n}
-                text = `重复 ${min} 次`;
-            } else if (max === '') { // {n,}
-                text = `重复 ${min} 次或更多`;
-            } else { // {n,m}
-                text = `重复 ${min} 到 ${max} 次`;
-            }
-        }
-        break;
+  if (node.kind.startsWith('{')) {
+      const range = node.kind.slice(1, -1);
+      const parts = range.split(',');
+      min = parseInt(parts[0], 10);
+      if (parts.length === 1) { // {n}
+          max = min;
+          text = `重复 ${min} 次`;
+      } else if (parts[1] === '') { // {n,}
+          max = 'infinity';
+          text = `重复 ${min} 次或更多`;
+      } else { // {n,m}
+          max = parseInt(parts[1], 10);
+          text = `重复 ${min} 到 ${max} 次`;
+      }
+  } else {
+      switch(node.kind) {
+          case '*': text = '0 或更多次'; min = 0; max = 'infinity'; break;
+          case '+': text = '1 或 更多次'; min = 1; max = 'infinity'; break;
+          case '?': text = '0 或 1 次'; min = 0; max = 1; break;
+      }
   }
+  
   if (!node.greedy) text += ' (非贪婪)';
   
-  const hasBypass = node.kind === '?' || node.kind === '*';
-  const hasLoop = node.kind === '+' || node.kind === '*';
+  const hasBypass = min === 0;
+  const hasLoop = max === 'infinity' || (typeof max === 'number' && max > 1);
 
   return (
-    <div className="inline-flex flex-col items-center mx-2">
-      <div className="relative pt-6 pb-6">
+    <div className="p-4 border-2 border-dashed border-destructive/50 rounded-lg bg-destructive/10 relative mx-2">
+      <div className="absolute -top-3 left-2 text-xs text-center text-destructive bg-background px-1">{text}</div>
+      <div className="relative">
         <NodeComponent node={node.content} />
         {hasBypass && (
-          <div className="absolute top-0 left-0 right-0 h-4" aria-hidden="true">
+          <div className="absolute -top-4 left-0 right-0 h-4" aria-hidden="true">
             <div className="w-full h-full border-t-2 border-x-2 border-primary rounded-t-md" />
           </div>
         )}
         {hasLoop && (
-          <div className="absolute bottom-0 left-0 right-0 h-4" aria-hidden="true">
+          <div className="absolute -bottom-4 left-0 right-0 h-4" aria-hidden="true">
             <div className={cn("w-full h-full border-b-2 border-x-2 border-primary rounded-b-md flex items-center", !node.greedy && "border-dashed")}>
               <div className="w-0 h-0 border-t-[4px] border-t-transparent border-r-[5px] border-r-primary border-b-[4px] border-b-transparent ml-2"></div>
             </div>
           </div>
         )}
       </div>
-      <p className="text-xs text-muted-foreground font-medium">{text}</p>
     </div>
   );
 };
