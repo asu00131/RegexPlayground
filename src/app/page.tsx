@@ -395,14 +395,14 @@ export default function RegexPlaygroundPage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <header className="border-b sticky top-0 bg-background/95 backdrop-blur z-10">
         <div className="container mx-auto px-4 py-3">
-          <h1 className="text-2xl font-bold font-headline">正则表达式乐园</h1>
+          <h1 className="text-2xl font-bold font-headline">表达式可视化</h1>
           <p className="text-muted-foreground text-sm">在线测试和调试正则表达式 (.NET 引擎)。</p>
         </div>
       </header>
 
       <main className="flex-grow container mx-auto p-4 flex flex-col gap-6">
-        <Card className="border-t-4 border-primary">
-          <CardContent className="pt-6">
+        <Card>
+          <CardContent className="p-0">
             <RegexVisualizer regex={regex} />
           </CardContent>
         </Card>

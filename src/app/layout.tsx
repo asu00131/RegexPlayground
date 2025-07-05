@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
-  title: '正则表达式乐园',
+  title: '表达式可视化',
   description: '一个强大的在线工具，用于测试、可视化和从正则表达式生成数据。',
 };
 
