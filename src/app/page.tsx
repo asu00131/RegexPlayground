@@ -402,10 +402,7 @@ export default function RegexPlaygroundPage() {
 
       <main className="flex-grow container mx-auto p-4 flex flex-col gap-6">
         <Card className="border-t-4 border-primary">
-          <CardHeader>
-            <CardTitle className="font-bold">表达式可视化</CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <RegexVisualizer regex={regex} />
           </CardContent>
         </Card>
