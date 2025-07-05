@@ -28,10 +28,8 @@ import {
 } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { generateRegexData } from '@/ai/flows/generate-regex-data';
 import {
   ClipboardCopy,
-  Sparkles,
   AlertCircle,
   Loader2,
   Trash2,
@@ -216,7 +214,6 @@ export default function RegexPlaygroundPage() {
   const [multiline, setMultiline] = useState(true);
   
   const [regexError, setRegexError] = useState<string | null>(null);
-  const [isInsertingSample, setIsInsertingSample] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
   const [matches, setMatches] = useState<MatchResult[]>([]);
@@ -340,37 +337,6 @@ export default function RegexPlaygroundPage() {
     handleCopy(groupNText, `所有匹配中的分组 ${groupIndex} 的内容`);
   }, [matches, handleCopy]);
 
-  const handleGenerateAndInsertData = useCallback(async () => {
-    if (!regex) {
-      toast({
-        variant: 'destructive',
-        title: '请输入正则表达式',
-        description: 'AI需要一个正则表达式来生成测试数据。',
-      });
-      return;
-    }
-    setIsInsertingSample(true);
-    try {
-      const result = await generateRegexData({ regex });
-      setTestString((prevTestString) =>
-        prevTestString ? `${result.sampleData}\n${prevTestString}` : result.sampleData
-      );
-      toast({
-        title: '数据已插入',
-        description: 'AI生成的测试数据已添加到测试字符串的开头。',
-      });
-    } catch (error) {
-      console.error('生成数据时出错:', error);
-      toast({
-        variant: 'destructive',
-        title: '生成失败',
-        description: '无法生成示例数据。请检查您的网络连接或稍后再试。',
-      });
-    } finally {
-      setIsInsertingSample(false);
-    }
-  }, [regex, toast]);
-
   const highlightedTestString = useMemo(() => {
     if (regexError || !testString || matches.length === 0) {
       const lines = (testString || '').split('\n');
@@ -484,12 +450,8 @@ export default function RegexPlaygroundPage() {
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader>
                 <CardTitle className="font-bold">测试字符串</CardTitle>
-                <Button onClick={handleGenerateAndInsertData} disabled={isInsertingSample} size="sm">
-                  {isInsertingSample ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                  AI 插入数据
-                </Button>
               </CardHeader>
               <CardContent>
                  <div className="relative h-48 border rounded-md">
