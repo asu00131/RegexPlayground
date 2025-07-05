@@ -277,17 +277,17 @@ const Quantifier = ({ node }: { node: AstNode & { type: 'quantifier' } }) => {
   const hasLoop = max === 'infinity' || (typeof max === 'number' && max > 1);
 
   return (
-    <div className="p-4 border-2 border-dashed border-destructive/50 rounded-lg bg-destructive/10 relative mx-2">
+    <div className="px-4 py-6 border-2 border-dashed border-destructive/50 rounded-lg bg-destructive/10 relative mx-2">
       <div className="absolute -top-3 left-2 text-xs text-center text-destructive bg-background px-1">{text}</div>
       <div className="relative">
         <NodeComponent node={node.content} />
         {hasBypass && (
-          <div className="absolute -top-4 left-0 right-0 h-4" aria-hidden="true">
+          <div className="absolute -top-6 left-0 right-0 h-6" aria-hidden="true">
             <div className="w-full h-full border-t-2 border-x-2 border-primary rounded-t-md" />
           </div>
         )}
         {hasLoop && (
-          <div className="absolute -bottom-4 left-0 right-0 h-4" aria-hidden="true">
+          <div className="absolute -bottom-6 left-0 right-0 h-6" aria-hidden="true">
             <div className={cn("w-full h-full border-b-2 border-x-2 border-primary rounded-b-md flex items-center", !node.greedy && "border-dashed")}>
               <div className="w-0 h-0 border-t-[4px] border-t-transparent border-r-[5px] border-r-primary border-b-[4px] border-b-transparent ml-2"></div>
             </div>
@@ -397,5 +397,3 @@ const RegexVisualizer = ({ regex }: { regex: string }) => {
 };
 
 export default RegexVisualizer;
-
-    
